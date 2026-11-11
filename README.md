@@ -1,15 +1,15 @@
 # KFWR---Kizami-Free-Web-Reader
-Бесплатная веб-читалка книг в форматах TXT, FB2, EPUB, PDF с озвучиванием(обычное + нейроголоса) без регистрации и сбора cookie.
+#Бесплатная веб-читалка книг в форматах TXT, FB2, EPUB, PDF с озвучиванием(обычное + нейроголоса) без регистрации и сбора cookie.
 
-![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-111953.jpg)
+##![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-111953.jpg)
 
-![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-111956.jpg)
+##![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-111956.jpg)
 
-![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-111959.jpg)
+##![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-111959.jpg)
 
-![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-112139.jpg)
+##![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-112139.jpg)
 
-![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-112143.jpg)
+##![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-112143.jpg)
 
 
 
