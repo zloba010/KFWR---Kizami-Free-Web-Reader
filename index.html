@@ -1,0 +1,3443 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4a3728">
+<title>Kizamia — читалка книг</title>
+<script type="importmap">
+{
+  "imports": {
+    "piper-tts-web": "https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.4/+esm"
+  }
+}
+</script>
+<style>
+:root{ --radius:14px; --ease:cubic-bezier(.2,.7,.3,1); }
+[data-theme="light"]{
+  --bg:#e6e2db; --bg-2:#ded9d1; --surface:#f4f2ed; --surface-2:#ebe8e2;
+  --text:#2b2018; --text-dim:#7d6c5b; --accent:#4a3728; --accent-2:#6d5442;
+  --on-accent:#f4f2ed; --border:#d2ccc3; --page:#f2efe9;
+  --shadow:0 8px 26px rgba(74,55,40,.14); --overlay:rgba(43,32,24,.45);
+}
+[data-theme="dark"]{
+  --bg:#17110d; --bg-2:#100c09; --surface:#241c16; --surface-2:#2f251d;
+  --text:#eae6df; --text-dim:#a2948a; --accent:#ded8ce; --accent-2:#bdb3a7;
+  --on-accent:#1c1511; --border:#3a2d23; --page:#201811;
+  --shadow:0 8px 26px rgba(0,0,0,.5); --overlay:rgba(0,0,0,.62);
+}
+[data-theme="glass"]{
+  --bg:transparent; --bg-2:rgba(255,255,255,0.15);
+  --surface:rgba(255,255,255,0.22); --surface-2:rgba(255,255,255,0.40);
+  --text:#1e1a38; --text-dim:#5a5280; --accent:#7a6ac0; --accent-2:#9a8ce0;
+  --on-accent:#ffffff; --border:rgba(255,255,255,0.45); --page:rgba(255,255,255,0.12);
+  --shadow:0 12px 40px rgba(80,60,150,0.20); --overlay:rgba(60,40,120,0.30);
+}
+[data-theme="glass"] body{
+  background:
+    radial-gradient(circle at 8% 12%, #b8a7ff 0%, transparent 38%),
+    radial-gradient(circle at 92% 8%, #a7d8ff 0%, transparent 40%),
+    radial-gradient(circle at 5% 88%, #ffb8e0 0%, transparent 40%),
+    radial-gradient(circle at 95% 92%, #a7ffd4 0%, transparent 42%),
+    radial-gradient(circle at 50% 50%, #d4b8ff 0%, transparent 55%),
+    linear-gradient(135deg, #ded9f2 0%, #e8e2f5 50%, #dbe6f5 100%);
+  background-attachment: fixed;
+}
+[data-theme="glass"] .lib-header,
+[data-theme="glass"] .reader-header,
+[data-theme="glass"] .reader-footer{
+  background: linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%);
+  backdrop-filter: blur(44px) saturate(200%) brightness(1.06);
+  -webkit-backdrop-filter: blur(44px) saturate(200%) brightness(1.06);
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75), 0 4px 24px rgba(100,80,180,0.10);
+}
+[data-theme="glass"] .reader-body{
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(56px) saturate(180%) brightness(1.08);
+  -webkit-backdrop-filter: blur(56px) saturate(180%) brightness(1.08);
+  position: relative;
+}
+[data-theme="glass"] .reader-body::after{
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 45% at 15% 5%, rgba(255,255,255,0.38) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 35% at 88% 95%, rgba(255,255,255,0.20) 0%, transparent 60%);
+  z-index: 1;
+}
+[data-theme="glass"] .text-viewport,
+[data-theme="glass"] .pdf-viewport{ z-index: 2; }
+[data-theme="glass"] .book-item,
+[data-theme="glass"] .continue-card{
+  background: linear-gradient(135deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.10) 100%);
+  border: 1px solid rgba(255,255,255,0.50);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 8px 28px rgba(100,80,180,0.14);
+  position: relative; overflow: hidden;
+}
+[data-theme="glass"] .book-item::before{
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.30) 0%, transparent 100%);
+  pointer-events: none;
+}
+[data-theme="glass"] .book-item:hover,
+[data-theme="glass"] .continue-card:hover{
+  border-color: rgba(255,255,255,0.85);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,1), 0 16px 44px rgba(100,80,180,0.24);
+}
+[data-theme="glass"] .continue-progress{ background: linear-gradient(90deg, #a496dc 0%, #8a7ac8 100%); }
+[data-theme="glass"] .nav-btn,
+[data-theme="glass"] .mini-btn,
+[data-theme="glass"] .modal-actions button{
+  background: linear-gradient(135deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.14) 100%);
+  border: 1px solid rgba(255,255,255,0.55);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 4px 16px rgba(100,80,180,0.12);
+}
+[data-theme="glass"] .nav-btn:hover,
+[data-theme="glass"] .mini-btn:hover,
+[data-theme="glass"] .modal-actions button:hover{
+  background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.22) 100%);
+}
+[data-theme="glass"] .icon-btn:hover,
+[data-theme="glass"] .book-del:hover,
+[data-theme="glass"] .page-btn:hover,
+[data-theme="glass"] .bookmark-del:hover{
+  background: rgba(255,255,255,0.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+}
+[data-theme="glass"] .btn-primary,
+[data-theme="glass"] .modal-actions button.primary{
+  background: linear-gradient(135deg,
+    rgba(180,160,255,0.82) 0%, rgba(140,120,220,0.72) 45%, rgba(160,200,255,0.78) 100%);
+  border: 1px solid rgba(255,255,255,0.5);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 8px 24px rgba(140,120,220,0.38);
+  color: #ffffff; text-shadow: 0 1px 2px rgba(60,40,140,0.28);
+}
+[data-theme="glass"] .menu-popup{
+  background: linear-gradient(135deg, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.32) 100%);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 20px 50px rgba(100,80,180,0.25);
+}
+[data-theme="glass"] .menu-popup button:hover{ background: rgba(255,255,255,0.55); }
+[data-theme="glass"] .drawer{
+  background: linear-gradient(135deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.22) 100%);
+  backdrop-filter: blur(56px) saturate(200%) brightness(1.05);
+  -webkit-backdrop-filter: blur(56px) saturate(200%) brightness(1.05);
+  border-left: 1px solid rgba(255,255,255,0.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), -24px 0 64px rgba(100,80,180,0.20);
+}
+[data-theme="glass"] .settings{
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255,255,255,0.4);
+}
+[data-theme="glass"] .toc-list li:hover,
+[data-theme="glass"] .bookmark-item:hover{ background: rgba(255,255,255,0.5); }
+[data-theme="glass"] .modal-box{
+  background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.25) 100%);
+  backdrop-filter: blur(56px) saturate(200%);
+  -webkit-backdrop-filter: blur(56px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 24px 80px rgba(100,80,180,0.30);
+}
+[data-theme="glass"] .modal-box input{
+  background: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.8);
+}
+[data-theme="glass"] .empty{
+  background: linear-gradient(135deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.10) 100%);
+  border: 1px dashed rgba(255,255,255,0.6);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+}
+[data-theme="glass"] .overlay{ backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+[data-theme="glass"] .tts-option{
+  background: linear-gradient(135deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.14) 100%);
+  border: 1px solid rgba(255,255,255,0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+}
+[data-theme="glass"] .tts-option.active{
+  background: linear-gradient(135deg, rgba(180,160,255,0.90) 0%, rgba(140,120,220,0.80) 100%);
+  border: 1px solid rgba(255,255,255,0.65); color: #fff;
+}
+[data-theme="glass"] .piper-progress{
+  background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.4);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+[data-theme="glass"] #piper-progress-fill{ background: linear-gradient(90deg, #a496dc 0%, #8a7ac8 100%); }
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; height:100%; }
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; overflow:hidden; overscroll-behavior:none;
+  transition:background .25s var(--ease),color .25s var(--ease);
+}
+button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+input{ font:inherit; }
+#app{ position:fixed; inset:0; display:flex; flex-direction:column; }
+.view{ position:absolute; inset:0; display:none; flex-direction:column; }
+.view.active{ display:flex; }
+
+#view-library{ background:var(--bg); }
+.lib-header{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:16px 20px 14px;
+  border-bottom:1px solid var(--border); background:var(--bg);
+}
+.brand{ display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-mark{
+  width:40px; height:40px; border-radius:12px; flex:0 0 auto;
+  background:var(--accent); color:var(--on-accent);
+  display:grid; place-items:center;
+}
+.brand-mark svg{ width:24px; height:24px; display:block; }
+.brand h1{ font-size:18px; margin:0; letter-spacing:.3px; }
+.brand p{ margin:1px 0 0; font-size:12px; color:var(--text-dim); }
+.header-actions{ display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+.menu-wrap{ position:relative; display:flex; flex:0 0 auto; }
+.btn-primary{
+  display:inline-flex; align-items:center; gap:8px;
+  height:42px; padding:0 18px; border-radius:12px;
+  background:var(--accent); color:var(--on-accent);
+  font-weight:600; font-size:14px;
+  transition:transform .12s var(--ease),filter .15s;
+}
+.btn-primary:hover{ filter:brightness(1.08); }
+.btn-primary:active{ transform:scale(.97); }
+.icon-btn{
+  width:42px; height:42px; border-radius:12px;
+  display:grid; place-items:center; font-size:18px; line-height:1; color:var(--text);
+  transition:background .15s,transform .1s; flex:0 0 auto;
+}
+.icon-btn:hover{ background:var(--surface-2); }
+.icon-btn:active{ transform:scale(.93); }
+.icon-btn:disabled{ opacity:.35; pointer-events:none; }
+#btn-menu svg{ width:20px; height:20px; display:block; }
+.menu-popup{
+  position:absolute; top:calc(100% + 6px); right:0;
+  min-width:230px; max-width:calc(100vw - 24px);
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; box-shadow:var(--shadow); padding:6px; z-index:20;
+  animation:menuIn .15s ease;
+}
+.menu-popup[hidden]{ display:none; }
+@keyframes menuIn{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+.menu-popup button{
+  display:flex; align-items:center; gap:10px; width:100%;
+  padding:10px 12px; border-radius:8px; font-size:14px; color:var(--text);
+  text-align:left; transition:background .12s;
+}
+.menu-popup button:hover{ background:var(--surface-2); }
+.menu-popup button .menu-icon{
+  width:20px; text-align:center; flex:0 0 auto; font-size:15px; color:var(--text-dim);
+}
+.lib-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 20px 48px; }
+.lib-note{
+  max-width:820px; margin:0 auto 6px;
+  font-size:12px; color:var(--text-dim); text-align:center; line-height:1.5; padding:0 8px;
+}
+.lib-status{
+  max-width:820px; margin:0 auto 14px;
+  font-size:14px; font-weight:600; color:var(--text); text-align:center; line-height:1.45;
+  padding:0 8px; min-height:20px;
+}
+.continue-card{
+  position:relative; display:flex; align-items:center; gap:14px;
+  padding:14px 16px 16px; margin:0 auto 18px; max-width:820px;
+  border-radius:var(--radius); background:var(--surface);
+  border:1px solid var(--border); box-shadow:var(--shadow);
+  overflow:hidden; cursor:pointer;
+  transition:transform .12s var(--ease),box-shadow .2s var(--ease),border-color .15s;
+}
+.continue-card[hidden]{ display:none; }
+.continue-card:hover{ border-color:var(--accent-2); transform:translateY(-1px); }
+.continue-card:active{ transform:scale(.995); }
+.continue-cover{
+  width:44px; height:58px; border-radius:8px;
+  background:var(--accent); color:var(--on-accent);
+  display:grid; place-items:center; font-weight:700; font-size:20px;
+  flex:0 0 auto; box-shadow:inset 0 -3px 0 rgba(0,0,0,.15); text-transform:uppercase;
+}
+.continue-info{ flex:1; min-width:0; }
+.continue-label{
+  font-size:10px; font-weight:700; letter-spacing:.8px;
+  text-transform:uppercase; color:var(--text-dim); margin-bottom:4px;
+}
+.continue-title{
+  font-size:15px; font-weight:700; line-height:1.25;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.continue-meta{
+  font-size:12px; color:var(--text-dim); margin-top:3px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.continue-btn{
+  width:42px; height:42px; border-radius:12px;
+  background:var(--accent); color:var(--on-accent);
+  display:grid; place-items:center; flex:0 0 auto;
+  font-size:20px; line-height:1; box-shadow:0 3px 10px rgba(0,0,0,.15);
+}
+.continue-progress{
+  position:absolute; left:0; bottom:0; height:3px;
+  background:var(--accent); border-radius:0 3px 3px 0;
+  transition:width .3s var(--ease);
+}
+.book-list{
+  list-style:none; margin:0 auto; padding:0; max-width:820px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.book-item{
+  display:flex; align-items:center; gap:12px; padding:14px 16px;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  cursor:pointer; transition:border-color .15s,box-shadow .2s var(--ease),transform .15s var(--ease);
+}
+.book-item:hover{ border-color:var(--accent-2); box-shadow:var(--shadow); transform:translateY(-1px); }
+.book-item:active{ transform:scale(.995); }
+.book-info{ flex:1; min-width:0; }
+.book-title{
+  font-size:15px; font-weight:600; line-height:1.35;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.book-author{
+  font-size:12.5px; color:var(--text-dim); margin-top:3px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.book-badge{
+  flex:0 0 auto; font-size:11px; font-weight:700; letter-spacing:.4px;
+  color:var(--text-dim); padding:4px 8px; border-radius:7px;
+  border:1px solid var(--border); text-transform:uppercase;
+}
+.book-del{
+  flex:0 0 auto; width:34px; height:34px; border-radius:9px;
+  display:grid; place-items:center; color:var(--text-dim); font-size:15px;
+  transition:background .15s,color .15s;
+}
+.book-del:hover{ background:var(--surface-2); color:var(--text); }
+.empty{
+  max-width:420px; margin:24px auto 0; text-align:center;
+  padding:32px 20px; border:1px dashed var(--border); border-radius:var(--radius);
+}
+.empty h2{ margin:0 0 8px; font-size:17px; }
+.empty p{ margin:0; font-size:13.5px; color:var(--text-dim); line-height:1.5; }
+.drag-active #view-library::after{
+  content:"Отпустите файл: книга или резервная копия";
+  position:absolute; inset:12px; border-radius:18px;
+  border:2px dashed var(--accent); background:rgba(74,55,40,.12);
+  display:grid; place-items:center; font-size:16px; font-weight:600;
+  color:var(--text); pointer-events:none; z-index:5;
+}
+
+#view-reader{ background:var(--bg); }
+.reader-header{
+  flex:0 0 auto; display:flex; align-items:center; gap:6px;
+  padding:8px 10px; background:var(--bg-2); border-bottom:1px solid var(--border);
+}
+.reader-title{
+  flex:1; min-width:0; text-align:center;
+  font-size:14px; font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 4px;
+}
+.reader-body{ flex:1; min-height:0; position:relative; background:var(--page); }
+.text-viewport{ position:absolute; inset:20px 24px; overflow:hidden; display:none; }
+.pdf-viewport{
+  position:absolute; inset:12px;
+  display:none; align-items:center; justify-content:center; overflow:auto;
+}
+.pdf-viewport canvas{
+  max-width:100%; max-height:100%; background:#fff; border-radius:3px;
+  box-shadow:0 3px 18px rgba(0,0,0,.28);
+}
+.text-flow{
+  position:relative; width:100%; height:100%; overflow:visible;
+  column-gap:0; column-fill:auto;
+  font-family:Georgia,"Iowan Old Style","PT Serif","Noto Serif","Times New Roman",serif;
+  line-height:1.62; text-align:justify;
+  hyphens:auto; -webkit-hyphens:auto;
+  color:var(--text); overflow-wrap:break-word; font-size:19px;
+}
+.text-flow p{ margin:0 0 .32em; text-indent:1.3em; }
+.text-flow h1+p,.text-flow h2+p,.text-flow h3+p,.text-flow h4+p,
+.text-flow blockquote+p,.text-flow .subtitle+p{ text-indent:0; }
+.text-flow h1,.text-flow h2,.text-flow h3,.text-flow h4,.text-flow h5{
+  text-indent:0; font-weight:700; line-height:1.28; margin:1.15em 0 .55em;
+  text-align:left; break-inside:avoid; break-after:avoid;
+}
+.text-flow h1{ font-size:1.4em; }
+.text-flow h2{ font-size:1.26em; }
+.text-flow h3{ font-size:1.13em; }
+.text-flow h4,.text-flow h5{ font-size:1.03em; }
+.text-flow blockquote{ margin:.7em 1.5em; font-style:italic; color:var(--text-dim); text-indent:0; }
+.text-flow .subtitle{ text-indent:0; font-style:italic; text-align:center; margin:.9em 0; }
+.text-flow .verse{ text-indent:0; text-align:left; margin:0 0 .1em 1.6em; }
+.text-flow .stanza{ margin:0 0 .85em; }
+.text-flow .poem{ margin:.8em 0; }
+.text-flow .spacer{ height:.85em; }
+.text-flow .epub-doc{ display:block; }
+.text-flow em{ font-style:italic; }
+.text-flow strong{ font-weight:700; }
+.text-flow hr{ border:none; border-top:1px solid var(--border); margin:1.2em 0; }
+.reader-footer{
+  flex:0 0 auto; display:flex; align-items:center; gap:8px;
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  background:var(--bg-2); border-top:1px solid var(--border);
+}
+.nav-btn{
+  flex:1 1 0; height:46px; border-radius:13px;
+  background:var(--surface); border:1px solid var(--border);
+  font-size:14px; font-weight:600;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:background .15s,transform .1s; min-width:0;
+}
+.nav-btn:hover{ background:var(--surface-2); }
+.nav-btn:active{ transform:scale(.97); }
+.nav-btn:disabled{ opacity:.35; }
+.page-btn{
+  flex:0 0 auto; height:46px; padding:0 12px; border-radius:13px;
+  font-size:12.5px; color:var(--text-dim); white-space:nowrap;
+}
+.page-btn:hover{ background:var(--surface-2); color:var(--text); }
+#btn-tts-settings{
+  width:auto; padding:0 12px;
+  display:inline-flex; align-items:center; gap:6px;
+}
+#btn-tts-settings svg{ width:18px; height:18px; flex:0 0 auto; }
+.tts-settings-text{ font-size:13px; font-weight:600; white-space:nowrap; }
+#btn-bookmark svg{ width:18px; height:18px; display:block; }
+.icon-btn.bookmark-toggle.active{ background:var(--accent); color:var(--on-accent); }
+
+.tts-modal-box{ width:min(460px,100%); max-height:92vh; overflow-y:auto; padding:18px 20px 20px; }
+.tts-modal-box h3{ margin:0 0 16px; font-size:17px; }
+.tts-group{ margin-bottom:20px; }
+.tts-group-title{
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+  color:var(--text-dim); margin-bottom:4px;
+}
+.tts-group-note{ font-size:12px; color:var(--text-dim); margin-bottom:10px; line-height:1.4; }
+.tts-options{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.tts-option{
+  position:relative;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:5px; padding:14px 10px; border-radius:12px;
+  border:1px solid var(--border); background:var(--surface-2);
+  cursor:pointer; transition:border-color .15s,background .15s,transform .1s;
+  text-align:center; color:var(--text);
+}
+.tts-option:hover{ border-color:var(--accent-2); }
+.tts-option:active{ transform:scale(.98); }
+.tts-option.active{
+  border-color:var(--accent); background:var(--accent); color:var(--on-accent);
+}
+.tts-option.active .tts-option-status{ color:var(--on-accent); opacity:.85; }
+.tts-option.active .tts-option-status.installed{ color:rgba(255,255,255,.95); }
+.tts-option-icon{ font-size:22px; line-height:1; }
+.tts-option-label{ font-size:13px; font-weight:600; }
+.tts-option-status{
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.3px;
+  color:var(--text-dim); margin-top:2px;
+}
+.tts-option-status.installed{ color:#4caf50; }
+.tts-option-status.downloading{ color:#ff9800; }
+.piper-progress{
+  margin-top:12px; padding:10px 12px; border-radius:10px;
+  background:var(--surface-2); border:1px solid var(--border);
+}
+.piper-progress[hidden]{ display:none; }
+.piper-progress-text{
+  display:flex; justify-content:space-between;
+  font-size:11px; color:var(--text-dim); margin-bottom:6px;
+}
+.piper-progress-bar{ height:5px; border-radius:3px; background:var(--border); overflow:hidden; }
+#piper-progress-fill{
+  height:100%; width:0%; background:var(--accent);
+  border-radius:3px; transition:width .3s ease;
+}
+
+.drawer-section{ padding:8px 4px 4px; }
+.section-title{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 12px 6px;
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+  color:var(--text-dim);
+}
+.add-bookmark{
+  display:flex; align-items:center; gap:8px;
+  width:calc(100% - 8px); margin:0 4px 6px;
+  padding:9px 12px; border-radius:10px;
+  background:var(--surface-2); border:1px dashed var(--border);
+  color:var(--text-dim); font-size:12.5px; font-weight:600;
+  text-align:left; transition:background .12s,color .12s,border-color .15s;
+}
+.add-bookmark:hover{
+  background:var(--accent); color:var(--on-accent);
+  border-color:var(--accent); border-style:solid;
+}
+.add-bookmark svg{ width:14px; height:14px; flex:0 0 auto; }
+.bookmark-item{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:10px 12px; border-radius:10px; cursor:pointer;
+  transition:background .12s; margin:0 4px 2px; position:relative;
+}
+.bookmark-item:hover{ background:var(--surface-2); }
+.bookmark-flag{
+  flex:0 0 auto; width:20px; height:20px;
+  display:grid; place-items:center; color:var(--accent); margin-top:1px;
+}
+.bookmark-flag svg{ width:14px; height:14px; }
+.bookmark-info{ flex:1; min-width:0; }
+.bookmark-label{
+  font-size:13px; font-weight:600; line-height:1.3;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text);
+}
+.bookmark-meta{ font-size:11px; color:var(--text-dim); margin-top:2px; }
+.bookmark-del{
+  flex:0 0 auto; width:26px; height:26px; border-radius:7px;
+  display:grid; place-items:center;
+  color:var(--text-dim); font-size:12px; opacity:0;
+  transition:opacity .12s,background .12s;
+}
+.bookmark-item:hover .bookmark-del{ opacity:1; }
+.bookmark-del:hover{ background:var(--surface); color:var(--text); }
+.bookmark-empty{
+  text-align:center; padding:14px 12px;
+  font-size:12px; color:var(--text-dim); line-height:1.55;
+}
+.bookmark-empty svg{
+  width:26px; height:26px; opacity:.35; margin:0 auto 6px; display:block;
+}
+.overlay{
+  position:fixed; inset:0; z-index:30; background:var(--overlay);
+  opacity:0; pointer-events:none; transition:opacity .25s var(--ease);
+}
+.overlay.show{ opacity:1; pointer-events:auto; }
+.drawer{
+  position:fixed; top:0; right:0; bottom:0; z-index:40;
+  width:min(400px,88vw); display:flex; flex-direction:column;
+  background:var(--surface); border-left:1px solid var(--border);
+  box-shadow:var(--shadow); transform:translateX(102%);
+  transition:transform .3s var(--ease);
+}
+.drawer.open{ transform:translateX(0); }
+.drawer-head{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+  padding:12px 10px 12px 18px; border-bottom:1px solid var(--border);
+}
+.drawer-head strong{ font-size:15px; }
+.drawer-body{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.toc-list{ list-style:none; margin:0; padding:4px 8px 8px; }
+.toc-list li{
+  padding:11px 12px; border-radius:10px;
+  font-size:14px; line-height:1.4; cursor:pointer; transition:background .12s;
+}
+.toc-list li:hover{ background:var(--surface-2); }
+.toc-list li.toc-empty{ color:var(--text-dim); font-size:13px; cursor:default; }
+.toc-list li.toc-empty:hover{ background:none; }
+.settings{
+  flex:0 0 auto; padding:10px 18px calc(18px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--border); background:var(--surface);
+}
+.setting-row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:9px 0; font-size:14px;
+}
+.fs-controls{ display:flex; align-items:center; gap:8px; }
+.fs-controls span{ font-size:12.5px; color:var(--text-dim); min-width:44px; text-align:center; }
+.mini-btn{
+  height:36px; min-width:44px; padding:0 12px;
+  border-radius:10px; border:1px solid var(--border);
+  background:var(--surface-2); font-size:13px; font-weight:600;
+  transition:background .15s,transform .1s;
+}
+.mini-btn:hover{ background:var(--border); }
+.mini-btn:active{ transform:scale(.95); }
+.modal{
+  position:fixed; inset:0; z-index:50; display:none;
+  align-items:center; justify-content:center;
+  background:var(--overlay); padding:20px;
+}
+.modal.show{ display:flex; }
+.modal-box{
+  width:min(340px,100%); background:var(--surface);
+  border:1px solid var(--border); border-radius:18px;
+  padding:20px; box-shadow:var(--shadow);
+}
+.modal-box h3{ margin:0 0 14px; font-size:16px; }
+.modal-box input{
+  width:100%; height:46px; padding:0 14px;
+  border-radius:12px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text); font-size:16px; outline:none;
+}
+.modal-box input:focus{ border-color:var(--accent-2); }
+.modal-actions{ display:flex; gap:8px; margin-top:14px; }
+.modal-actions button{
+  flex:1; height:44px; border-radius:12px;
+  border:1px solid var(--border); background:var(--surface-2);
+  font-size:14px; font-weight:600;
+}
+.modal-actions button.primary{
+  background:var(--accent); color:var(--on-accent); border-color:transparent;
+}
+.modal-actions button.danger{
+  background:rgba(201,74,74,0.12);
+  color:#c94a4a;
+  border-color:rgba(201,74,74,0.3);
+  flex:0 0 auto;
+  padding:0 14px;
+}
+.modal-actions button.danger:hover{ background:rgba(201,74,74,0.2); }
+[data-theme="dark"] .modal-actions button.danger{
+  background:rgba(255,120,120,0.15);
+  color:#ff9a9a;
+  border-color:rgba(255,120,120,0.3);
+}
+[data-theme="dark"] .modal-actions button.danger:hover{ background:rgba(255,120,120,0.25); }
+.toast{
+  position:fixed; bottom:24px; left:50%;
+  transform:translateX(-50%) translateY(20px);
+  padding:12px 22px; background:var(--accent); color:var(--on-accent);
+  border-radius:12px; font-size:14px; font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  opacity:0; transition:opacity .25s,transform .25s;
+  z-index:100; pointer-events:none; max-width:90vw; text-align:center;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ============ ПОЛКИ И СОРТИРОВКА ============ */
+.filters-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  max-width:820px;
+  margin:0 auto 14px;
+}
+.collections-scroll{
+  flex:1; min-width:0;
+  display:flex; gap:6px;
+  overflow-x:auto; overflow-y:hidden;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  padding:2px 0;
+}
+.collections-scroll::-webkit-scrollbar{ display:none; }
+
+.collection-pill{
+  flex:0 0 auto;
+  height:34px;
+  padding:0 14px;
+  border-radius:17px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-dim);
+  background:var(--surface);
+  border:1px solid var(--border);
+  transition:background .15s, color .15s, border-color .15s;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+.collection-pill:hover{ color:var(--text); border-color:var(--accent-2); }
+.collection-pill.active{
+  background:var(--accent);
+  color:var(--on-accent);
+  border-color:var(--accent);
+}
+.collection-pill .count{
+  font-size:11px; opacity:.7; font-weight:700;
+}
+.collection-pill.add{ border-style:dashed; }
+.collection-pill.add:hover{ background:var(--surface-2); }
+
+[data-theme="glass"] .collection-pill{
+  background: linear-gradient(135deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.14) 100%);
+  border: 1px solid rgba(255,255,255,0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+}
+[data-theme="glass"] .collection-pill.active{
+  background: linear-gradient(135deg, rgba(180,160,255,0.90) 0%, rgba(140,120,220,0.80) 100%);
+  border-color: rgba(255,255,255,0.65);
+  color: #fff;
+}
+
+.sort-btn{
+  flex:0 0 auto;
+  height:34px;
+  padding:0 12px;
+  border-radius:10px;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text);
+  background:var(--surface);
+  border:1px solid var(--border);
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  transition:background .15s, border-color .15s;
+  white-space:nowrap;
+}
+.sort-btn:hover{ border-color:var(--accent-2); background:var(--surface-2); }
+.sort-btn .sort-arrow{
+  font-size:10px; color:var(--text-dim);
+}
+[data-theme="glass"] .sort-btn{
+  background: linear-gradient(135deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.14) 100%);
+  border: 1px solid rgba(255,255,255,0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+}
+
+.sort-menu{
+  position:fixed;
+  min-width:220px;
+  max-width:calc(100vw - 24px);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  padding:6px;
+  z-index:60;
+  animation:menuIn .12s ease;
+}
+.sort-menu[hidden]{ display:none; }
+.sort-menu button{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; width:100%; padding:9px 12px;
+  border-radius:8px; font-size:13px; font-weight:500;
+  color:var(--text); text-align:left;
+  transition:background .12s;
+}
+.sort-menu button:hover{ background:var(--surface-2); }
+.sort-menu button.active{ font-weight:700; }
+.sort-menu button .sort-check{
+  font-size:12px; color:var(--accent); opacity:0; min-width:14px;
+}
+.sort-menu button.active .sort-check{ opacity:1; }
+[data-theme="glass"] .sort-menu{
+  background: linear-gradient(135deg, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.32) 100%);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 20px 50px rgba(100,80,180,0.25);
+}
+[data-theme="glass"] .sort-menu button:hover{ background: rgba(255,255,255,0.55); }
+
+.book-menu-btn{
+  flex:0 0 auto;
+  width:30px; height:30px; border-radius:8px;
+  display:grid; place-items:center;
+  color:var(--text-dim); font-size:16px; font-weight:700;
+  opacity:0;
+  transition:opacity .12s, background .12s;
+  cursor:pointer;
+  line-height:1;
+}
+.book-item:hover .book-menu-btn{ opacity:1; }
+.book-menu-btn:hover{ background:var(--surface-2); color:var(--text); }
+[data-theme="glass"] .book-menu-btn:hover{ background: rgba(255,255,255,0.55); }
+
+.book-ctx{
+  position:fixed;
+  min-width:240px;
+  max-width:calc(100vw - 24px);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  padding:6px;
+  z-index:60;
+  animation:menuIn .12s ease;
+}
+.book-ctx[hidden]{ display:none; }
+.book-ctx .ctx-header{
+  padding:8px 12px 6px;
+  font-size:10px; font-weight:700; letter-spacing:.6px;
+  text-transform:uppercase; color:var(--text-dim);
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.book-ctx button{
+  display:flex; align-items:center; gap:10px;
+  width:100%; padding:9px 12px; border-radius:8px;
+  font-size:13px; color:var(--text); text-align:left;
+  transition:background .12s;
+}
+.book-ctx button:hover{ background:var(--surface-2); }
+.book-ctx button.ctx-action{ font-weight:600; }
+.book-ctx button .ctx-dot{
+  width:14px; text-align:center; color:var(--accent); font-size:12px; flex:0 0 auto;
+}
+.book-ctx button.danger{ color:#c94a4a; }
+.book-ctx button.danger:hover{ background:rgba(201,74,74,0.08); }
+.book-ctx .ctx-divider{ height:1px; background:var(--border); margin:4px 0; }
+[data-theme="glass"] .book-ctx{
+  background: linear-gradient(135deg, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.32) 100%);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 20px 50px rgba(100,80,180,0.25);
+}
+[data-theme="glass"] .book-ctx button:hover{ background: rgba(255,255,255,0.55); }
+
+.book-collection-tag{
+  flex:0 0 auto;
+  font-size:10px; font-weight:600;
+  padding:3px 7px; border-radius:6px;
+  background:var(--surface-2);
+  color:var(--text-dim);
+  border:1px solid var(--border);
+  white-space:nowrap;
+  max-width:100px;
+  overflow:hidden; text-overflow:ellipsis;
+}
+[data-theme="glass"] .book-collection-tag{
+  background:rgba(255,255,255,0.5);
+  border:1px solid rgba(255,255,255,0.6);
+}
+
+@media (max-width:620px){
+  .lib-header{ padding:12px 14px; }
+  .brand-mark{ width:36px; height:36px; border-radius:11px; }
+  .brand-mark svg{ width:21px; height:21px; }
+  .brand h1{ font-size:16px; } .brand p{ font-size:11px; }
+  .lib-scroll{ padding:12px 14px 40px; }
+  .lib-note{ font-size:11.5px; }
+  .lib-status{ font-size:13.5px; margin-bottom:10px; }
+  .continue-card{ padding:12px 12px 14px; gap:12px; margin-bottom:14px; }
+  .continue-cover{ width:40px; height:52px; font-size:18px; }
+  .continue-label{ font-size:9.5px; }
+  .continue-title{ font-size:14px; }
+  .continue-meta{ font-size:11.5px; }
+  .continue-btn{ width:40px; height:40px; }
+  .btn-primary{ padding:0 14px; height:40px; }
+  .btn-primary span{ display:none; }
+  .btn-primary::before{ content:"＋"; font-size:19px; font-weight:400; }
+  .lib-header .icon-btn{ width:38px; height:38px; }
+  #btn-menu svg{ width:18px; height:18px; }
+  .menu-popup{ min-width:200px; left:auto; right:0; }
+  .text-viewport{ inset:14px 16px; }
+  .text-flow{ font-size:17px; line-height:1.58; }
+  .nav-btn{ font-size:13px; height:44px; }
+  .page-btn{ font-size:12px; height:44px; }
+  .reader-title{ font-size:13px; }
+  .reader-header .icon-btn{ width:38px; height:38px; }
+  #btn-bookmark svg{ width:16px; height:16px; }
+  #btn-tts-settings{ width:38px; padding:0; justify-content:center; }
+  #btn-tts-settings svg{ width:18px; height:18px; }
+  .tts-settings-text{ display:none; }
+  .tts-modal-box{ padding:16px; }
+  .filters-bar{ margin-bottom:10px; gap:6px; }
+  .collection-pill{ height:32px; padding:0 12px; font-size:12.5px; }
+  .sort-btn{ height:32px; padding:0 10px; font-size:12px; }
+  .book-menu-btn{ opacity:1; }
+  .book-collection-tag{ display:none; }
+}
+@media (min-width:900px){
+  .text-viewport{ inset:28px 40px; }
+  .text-flow{ font-size:20px; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <main id="view-library" class="view active">
+    <header class="lib-header">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+            <circle cx="15.6" cy="7" r="3.1" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M17.8 9.2 19.6 11.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <rect x="3.4" y="11.2" width="16.2" height="8.4" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6.6 11.2v8.4" stroke="currentColor" stroke-width="1.2" opacity=".55"/>
+            <path d="M9.2 14.2h6.4M9.2 16.6h4.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".6"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Kizamia</h1>
+          <p>Free Web Reader</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="menu-wrap">
+          <button id="btn-menu" class="icon-btn" title="Экспорт / импорт библиотеки" aria-label="Экспорт / импорт библиотеки">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <line x1="7" y1="20" x2="7" y2="5"/>
+              <polyline points="3 9 7 5 11 9"/>
+              <line x1="17" y1="4" x2="17" y2="19"/>
+              <polyline points="13 15 17 19 21 15"/>
+            </svg>
+          </button>
+          <div id="menu-popup" class="menu-popup" hidden>
+            <button id="menu-export">
+              <span class="menu-icon">⬇</span>
+              <span>Экспорт библиотеки</span>
+            </button>
+            <button id="menu-import">
+              <span class="menu-icon">⬆</span>
+              <span>Импорт библиотеки</span>
+            </button>
+          </div>
+        </div>
+        <button id="btn-theme-lib" class="icon-btn" title="Сменить тему">☾</button>
+        <button id="btn-add" class="btn-primary" title="Добавить книгу">
+          <span>Добавить книгу</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="lib-scroll">
+      <p class="lib-note">
+        Книги и прогресс чтения хранятся только в этом браузере (IndexedDB + localStorage).
+        Очистка данных браузера удалит библиотеку. Регистрация не требуется.
+      </p>
+
+      <div id="continue-card" class="continue-card" hidden>
+        <div class="continue-cover" id="continue-cover">?</div>
+        <div class="continue-info">
+          <div class="continue-label">Продолжить чтение</div>
+          <div class="continue-title" id="continue-title"></div>
+          <div class="continue-meta" id="continue-meta"></div>
+        </div>
+        <div class="continue-btn">›</div>
+        <div class="continue-progress" id="continue-progress" style="width:0%"></div>
+      </div>
+
+      <p id="lib-status" class="lib-status"></p>
+
+      <div class="filters-bar" id="filters-bar">
+        <div class="collections-scroll" id="collections-scroll"></div>
+        <button class="sort-btn" id="sort-btn" title="Сортировка">
+          <span class="sort-label" id="sort-label">Дата</span>
+          <span class="sort-arrow" id="sort-arrow">↓</span>
+        </button>
+      </div>
+      <div class="sort-menu" id="sort-menu" hidden></div>
+
+      <div id="lib-empty" class="empty">
+        <h2>Библиотека пуста</h2>
+        <p>Нажмите «Добавить книгу» и выберите файл в формате<br>TXT, FB2, EPUB или PDF</p>
+      </div>
+      <ul id="book-list" class="book-list"></ul>
+    </div>
+
+    <input type="file" id="file-input" accept=".txt,.fb2,.epub,.pdf" multiple hidden>
+    <input type="file" id="backup-input" accept=".zip" hidden>
+  </main>
+
+  <main id="view-reader" class="view">
+    <header class="reader-header">
+      <button id="btn-close-book" class="icon-btn" title="Закрыть книгу">✕</button>
+      <div class="reader-title" id="reader-title"></div>
+      <button id="btn-tts-settings" class="icon-btn" title="Читать вслух">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M3 10v4a1 1 0 0 0 1 1h3l4 4V5L7 9H4a1 1 0 0 0-1 1z"/>
+          <path d="M16.5 8.5a5 5 0 0 1 0 7"/>
+          <path d="M19 6a9 9 0 0 1 0 12"/>
+        </svg>
+        <span class="tts-settings-text">Читать вслух</span>
+      </button>
+      <button id="btn-speak" class="icon-btn" title="Начать/остановить чтение">▶</button>
+      <button id="btn-bookmark" class="icon-btn bookmark-toggle" title="Заложить страницу">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/>
+        </svg>
+      </button>
+      <button id="btn-drawer" class="icon-btn" title="Содержание и настройки">☰</button>
+    </header>
+
+    <div class="reader-body" id="reader-body">
+      <div id="text-viewport" class="text-viewport">
+        <div id="text-flow" class="text-flow"></div>
+      </div>
+      <div id="pdf-viewport" class="pdf-viewport">
+        <canvas id="pdf-canvas"></canvas>
+      </div>
+    </div>
+
+    <footer class="reader-footer">
+      <button id="btn-prev" class="nav-btn">‹ Назад</button>
+      <button id="btn-page" class="page-btn"><span id="page-label">Стр. 1 из 1</span></button>
+      <button id="btn-next" class="nav-btn">Вперёд ›</button>
+    </footer>
+  </main>
+
+</div>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <strong>Содержание</strong>
+    <button class="icon-btn" id="drawer-close" title="Закрыть">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="section-title">
+        <span>Закладки <span class="count" id="bookmarks-count">(0)</span></span>
+      </div>
+      <button class="add-bookmark" id="add-bookmark-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span id="add-bookmark-label">Заложить страницу</span>
+      </button>
+      <div id="bookmarks-list"></div>
+      <div class="bookmark-empty" id="bookmarks-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/>
+        </svg>
+        Пока нет закладок.<br>Нажмите на флажок в шапке.
+      </div>
+    </div>
+    <div class="drawer-section" style="border-top:1px solid var(--border); margin-top:4px;">
+      <div class="section-title">Оглавление</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </div>
+  </div>
+  <div class="settings">
+    <div class="setting-row">
+      <span>Размер шрифта</span>
+      <div class="fs-controls">
+        <button class="mini-btn" id="fs-dec" title="Уменьшить">A−</button>
+        <span id="fs-val">100%</span>
+        <button class="mini-btn" id="fs-inc" title="Увеличить">A+</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span>Тема</span>
+      <button class="mini-btn" id="theme-toggle">Светлая</button>
+    </div>
+  </div>
+</aside>
+
+<div class="modal" id="page-modal">
+  <div class="modal-box">
+    <h3>Перейти к странице</h3>
+    <input type="number" id="page-input" min="1" value="1" inputmode="numeric">
+    <div class="modal-actions">
+      <button id="page-cancel">Отмена</button>
+      <button id="page-go" class="primary">Перейти</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="bookmark-modal">
+  <div class="modal-box">
+    <h3>Закладка на стр. <span id="bookmark-page-num">1</span></h3>
+    <input type="text" id="bookmark-label-input" placeholder="Метка (необязательно)" maxlength="80">
+    <div class="modal-actions">
+      <button id="bookmark-cancel">Отмена</button>
+      <button id="bookmark-save" class="primary">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="tts-modal">
+  <div class="modal-box tts-modal-box">
+    <h3>Читать вслух</h3>
+
+    <div class="tts-group">
+      <div class="tts-group-title">Системные голоса</div>
+      <div class="tts-group-note">Работают в любом браузере. Качество зависит от устройства.</div>
+      <div class="tts-options">
+        <button class="tts-option" data-engine="system" data-gender="female">
+          <span class="tts-option-icon">👩</span>
+          <span class="tts-option-label">Женский</span>
+        </button>
+        <button class="tts-option" data-engine="system" data-gender="male">
+          <span class="tts-option-icon">👨</span>
+          <span class="tts-option-label">Мужской</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="tts-group">
+      <div class="tts-group-title">Нейронные голоса (Piper)</div>
+      <div class="tts-group-note">
+        Качественная озвучка. После загрузки работает офлайн.
+        Первое скачивание — ~63 МБ, сохраняется в браузере навсегда.
+      </div>
+      <div class="tts-options">
+        <button class="tts-option" data-engine="piper" data-gender="female">
+          <span class="tts-option-icon">👩</span>
+          <span class="tts-option-label">Женский</span>
+          <span class="tts-option-status" data-status="female">Скачать</span>
+        </button>
+        <button class="tts-option" data-engine="piper" data-gender="male">
+          <span class="tts-option-icon">👨</span>
+          <span class="tts-option-label">Мужской</span>
+          <span class="tts-option-status" data-status="male">Скачать</span>
+        </button>
+      </div>
+      <div class="piper-progress" id="piper-progress" hidden>
+        <div class="piper-progress-text">
+          <span id="piper-progress-label">Загрузка голоса…</span>
+          <span id="piper-progress-pct">0%</span>
+        </div>
+        <div class="piper-progress-bar"><div id="piper-progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="tts-modal-close">Закрыть</button>
+      <button id="tts-play-toggle" class="primary">▶ Читать</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="collection-modal">
+  <div class="modal-box">
+    <h3 id="collection-modal-title">Новая полка</h3>
+    <input type="text" id="collection-name-input" placeholder="Название полки" maxlength="40">
+    <div class="modal-actions">
+      <button id="collection-modal-delete" class="danger" style="display:none;">Удалить</button>
+      <button id="collection-modal-cancel">Отмена</button>
+      <button id="collection-modal-save" class="primary">Создать</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+"use strict";
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+const LS = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v){ localStorage.setItem(k, JSON.stringify(v)); },
+  del(k){ localStorage.removeItem(k); }
+};
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+let _toastTimer = null;
+function toast(msg){
+  let el = $('#toast');
+  if (!el){ el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; document.body.appendChild(el); }
+  el.textContent = msg;
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+const DB_NAME = 'kizami', DB_VER = 1, STORE = 'content';
+let _dbPromise = null;
+function idb(){
+  if (_dbPromise) return _dbPromise;
+  _dbPromise = new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)){ reject(new Error('IndexedDB не поддерживается.')); return; }
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error || new Error('Ошибка IndexedDB.'));
+    req.onblocked = () => reject(new Error('IndexedDB заблокирован.'));
+  });
+  return _dbPromise;
+}
+async function idbPut(key, val){
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(val, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function idbGet(key){
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const r = tx.objectStore(STORE).get(key);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbDel(key){
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+async function gzipBlob(str){
+  const raw = new Blob([str], { type: 'text/plain' });
+  if (!('CompressionStream' in window)) return raw;
+  try {
+    const s = raw.stream().pipeThrough(new CompressionStream('gzip'));
+    const out = await new Response(s).arrayBuffer();
+    return new Blob([out], { type: 'application/gzip' });
+  } catch (e){ return raw; }
+}
+async function gunzipBlob(blob){
+  if (!blob) return '';
+  if (blob.type === 'text/plain') return await blob.text();
+  if (!('DecompressionStream' in window)) return await blob.text();
+  try {
+    const s = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+    return await new Response(s).text();
+  } catch (e){ return await blob.text(); }
+}
+
+let _crcTable = null;
+function crc32(bytes){
+  if (!_crcTable){
+    _crcTable = new Uint32Array(256);
+    for (let i = 0; i < 256; i++){
+      let c = i;
+      for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      _crcTable[i] = c >>> 0;
+    }
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++){ crc = _crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8); }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+class ZipWriter {
+  constructor(){ this.parts = []; this.central = []; this.offset = 0; }
+  addFile(name, bytes){
+    if (typeof bytes === 'string') bytes = new TextEncoder().encode(bytes);
+    const nameBytes = new TextEncoder().encode(name);
+    const crc = crc32(bytes);
+    const size = bytes.length;
+    const header = new Uint8Array(30 + nameBytes.length);
+    const dv = new DataView(header.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true); dv.setUint16(6, 0, true); dv.setUint16(8, 0, true);
+    dv.setUint16(10, 0, true); dv.setUint16(12, 0, true);
+    dv.setUint32(14, crc, true); dv.setUint32(18, size, true); dv.setUint32(22, size, true);
+    dv.setUint16(26, nameBytes.length, true); dv.setUint16(28, 0, true);
+    header.set(nameBytes, 30);
+    this.central.push({ nameBytes, crc, size, offset: this.offset });
+    this.parts.push(header); this.parts.push(bytes);
+    this.offset += header.length + size;
+  }
+  finish(){
+    const centralStart = this.offset;
+    let centralSize = 0;
+    for (const e of this.central){
+      const h = new Uint8Array(46 + e.nameBytes.length);
+      const dv = new DataView(h.buffer);
+      dv.setUint32(0, 0x02014b50, true);
+      dv.setUint16(4, 20, true); dv.setUint16(6, 20, true);
+      dv.setUint16(8, 0, true); dv.setUint16(10, 0, true);
+      dv.setUint16(12, 0, true); dv.setUint16(14, 0, true);
+      dv.setUint32(16, e.crc, true); dv.setUint32(20, e.size, true); dv.setUint32(24, e.size, true);
+      dv.setUint16(28, e.nameBytes.length, true); dv.setUint16(30, 0, true);
+      dv.setUint16(32, 0, true); dv.setUint16(34, 0, true);
+      dv.setUint16(36, 0, true); dv.setUint32(38, 0, true);
+      dv.setUint32(42, e.offset, true);
+      h.set(e.nameBytes, 46);
+      this.parts.push(h); centralSize += h.length;
+    }
+    const eocd = new Uint8Array(22);
+    const dv = new DataView(eocd.buffer);
+    dv.setUint32(0, 0x06054b50, true);
+    dv.setUint16(4, 0, true); dv.setUint16(6, 0, true);
+    dv.setUint16(8, this.central.length, true); dv.setUint16(10, this.central.length, true);
+    dv.setUint32(12, centralSize, true); dv.setUint32(16, centralStart, true);
+    dv.setUint16(20, 0, true);
+    this.parts.push(eocd);
+    return new Blob(this.parts, { type: 'application/zip' });
+  }
+}
+
+const KEYS = {
+  lib: 'kizami.library.v1',
+  settings: 'kizami.settings.v1',
+  migrated: 'kizami.migrated.v2',
+  collections: 'kizami.collections.v1'
+};
+const PIPER_LS_KEY = 'kizami.piper.installed.v1';
+
+let library = LS.get(KEYS.lib, []);
+let collections = LS.get(KEYS.collections, []);
+let settings = Object.assign({
+  theme: 'light', fontScale: 1,
+  ttsEngine: 'system', voiceGender: 'female',
+  sortBy: 'addedAt', sortDir: 'desc', filterCollection: 'all'
+}, LS.get(KEYS.settings, {}));
+
+const THEME_CYCLE = ['light', 'dark', 'glass'];
+const THEME_LABELS = { light: 'Светлая', dark: 'Тёмная', glass: 'Стекло' };
+const THEME_ICONS  = { light: '☾', dark: '💧', glass: '☀' };
+
+const PIPER_VOICES = {
+  female: 'ru_RU-irina-medium',
+  male:   'ru_RU-dmitri-medium'
+};
+
+let currentBook = null;
+let mode = 'text';
+let currentToc = [];
+let currentPage = 0;
+let totalPages = 1;
+let pageWidth = 1;
+
+let pdfDoc = null;
+let pdfBusy = false;
+let pdfQueued = null;
+let progressTimer = null;
+
+let ttsSpeaking = false;
+let ttsPreparing = false;
+let ttsUtterance = null;
+let ttsAutoAdvance = false;
+
+let piperModule = null;
+let piperReadyVoices = new Set();
+let piperWarmedUp = new Set();
+let piperCancelled = false;
+let currentAudioEl = null;
+
+/* Book context menu state */
+let bookCtxEl = null;
+
+function getPiperInstalledLS(){
+  try {
+    const raw = localStorage.getItem(PIPER_LS_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch(e){ return []; }
+}
+function setPiperInstalledLS(list){
+  try { localStorage.setItem(PIPER_LS_KEY, JSON.stringify(list)); } catch(e){}
+}
+function markPiperInstalled(voiceId){
+  piperReadyVoices.add(voiceId);
+  const list = getPiperInstalledLS();
+  if (!list.includes(voiceId)){
+    list.push(voiceId);
+    setPiperInstalledLS(list);
+  }
+}
+function markPiperUninstalled(voiceId){
+  piperReadyVoices.delete(voiceId);
+  piperWarmedUp.delete(voiceId);
+  setPiperInstalledLS(getPiperInstalledLS().filter(v => v !== voiceId));
+}
+
+piperReadyVoices = new Set(getPiperInstalledLS());
+
+window.addEventListener('storage', (e) => {
+  if (e.key === PIPER_LS_KEY){
+    piperReadyVoices = new Set(getPiperInstalledLS());
+    if ($('#tts-modal').classList.contains('show')){
+      updatePiperStatuses();
+      updateTtsModal();
+    }
+  }
+});
+
+const textViewport = $('#text-viewport');
+const textFlow = $('#text-flow');
+const pdfViewport = $('#pdf-viewport');
+const pdfCanvas = $('#pdf-canvas');
+const readerBody = $('#reader-body');
+
+function saveLibrary(){ LS.set(KEYS.lib, library); }
+function saveSettings(){ try { LS.set(KEYS.settings, settings); } catch(e){} }
+function saveCollections(){ LS.set(KEYS.collections, collections); }
+function saveProgress(){
+  if (!currentBook) return;
+  clearTimeout(progressTimer);
+  progressTimer = setTimeout(saveProgressNow, 350);
+}
+function saveProgressNow(){
+  if (!currentBook) return;
+  const meta = library.find(b => b.id === currentBook.meta.id);
+  if (!meta) return;
+  meta.page = currentPage;
+  meta.totalPages = totalPages;
+  try { saveLibrary(); } catch(e){}
+}
+
+function applyTheme(){
+  if (!THEME_CYCLE.includes(settings.theme)) settings.theme = 'light';
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  const t = $('#theme-toggle');
+  if (t) t.textContent = THEME_LABELS[settings.theme] || 'Светлая';
+  const icon = $('#btn-theme-lib');
+  if (icon) icon.textContent = THEME_ICONS[settings.theme] || '☾';
+  saveSettings();
+}
+function toggleTheme(){
+  const i = THEME_CYCLE.indexOf(settings.theme);
+  settings.theme = THEME_CYCLE[(i + 1) % THEME_CYCLE.length];
+  applyTheme();
+}
+
+function applyFontSize(){
+  const base = window.innerWidth < 620 ? 17 : (window.innerWidth >= 900 ? 20 : 19);
+  const px = Math.round(base * settings.fontScale);
+  textFlow.style.fontSize = px + 'px';
+  const v = $('#fs-val');
+  if (v) v.textContent = Math.round(settings.fontScale * 100) + '%';
+}
+function changeFontSize(delta){
+  stopSpeaking();
+  const ratio = totalPages > 1 ? currentPage / totalPages : 0;
+  settings.fontScale = clamp(Math.round((settings.fontScale + delta) * 10) / 10, 0.7, 2.2);
+  saveSettings();
+  applyFontSize();
+  if (mode === 'text' && currentBook){
+    requestAnimationFrame(() => {
+      layoutText();
+      goToPage(Math.round(ratio * (totalPages - 1)));
+    });
+  }
+}
+
+function showView(name){
+  $('#view-library').classList.toggle('active', name === 'library');
+  $('#view-reader').classList.toggle('active', name === 'reader');
+}
+
+function pluralBooks(n){
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'книга';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return 'книги';
+  return 'книг';
+}
+function updateLibStatus(){
+  const status = $('#lib-status');
+  if (!status) return;
+  const n = library.length;
+  if (n === 0) status.textContent = 'Здесь появятся ваши книги после загрузки';
+  else if (n === 1) status.textContent = 'Ваша библиотека — 1 книга';
+  else status.textContent = `Ваша библиотека — ${n} ${pluralBooks(n)}`;
+}
+function getContinueBook(){
+  const candidates = library.filter(b => (b.page || 0) > 0 && (b.totalPages || 0) > 0);
+  if (!candidates.length) return null;
+  return candidates.sort((a, b) => (b.lastOpened || 0) - (a.lastOpened || 0))[0];
+}
+function renderContinue(){
+  const card = $('#continue-card');
+  if (!card) return;
+  const book = getContinueBook();
+  if (!book){ card.hidden = true; return; }
+  card.hidden = false;
+  const initial = (book.title || '?').trim().charAt(0).toUpperCase() || '?';
+  $('#continue-cover').textContent = initial;
+  $('#continue-title').textContent = book.title || 'Без названия';
+  const author = book.author && book.author.trim() ? book.author.trim() : 'Неизвестный автор';
+  const pageNum = Math.min((book.page || 0) + 1, book.totalPages || 1);
+  $('#continue-meta').textContent = `${author} · Стр. ${pageNum} из ${book.totalPages}`;
+  const pct = book.totalPages > 0 ? Math.min(99, Math.round((book.page / book.totalPages) * 100)) : 0;
+  $('#continue-progress').style.width = pct + '%';
+  card.onclick = () => openBook(book.id);
+}
+
+/* ============ ПОЛКИ И СОРТИРОВКА ============ */
+function getVisibleBooks(){
+  let books = library.slice();
+  const filter = settings.filterCollection || 'all';
+  if (filter === 'none'){
+    books = books.filter(b => !b.collectionId);
+  } else if (filter !== 'all'){
+    books = books.filter(b => b.collectionId === filter);
+  }
+
+  const sortBy = settings.sortBy || 'addedAt';
+  const dir = (settings.sortDir === 'asc') ? 1 : -1;
+  const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
+
+  books.sort((a, b) => {
+    let cmp = 0;
+    switch (sortBy){
+      case 'title':
+        cmp = collator.compare(a.title || '', b.title || '');
+        break;
+      case 'author': {
+        const aa = (a.author || '').trim();
+        const bb = (b.author || '').trim();
+        if (!aa && !bb) cmp = 0;
+        else if (!aa) cmp = 1;
+        else if (!bb) cmp = -1;
+        else cmp = collator.compare(aa, bb);
+        break;
+      }
+      case 'progress': {
+        const ap = a.totalPages > 0 ? (a.page || 0) / a.totalPages : 0;
+        const bp = b.totalPages > 0 ? (b.page || 0) / b.totalPages : 0;
+        cmp = ap - bp;
+        break;
+      }
+      case 'lastOpened':
+        cmp = (a.lastOpened || 0) - (b.lastOpened || 0);
+        break;
+      case 'addedAt':
+      default:
+        cmp = (a.addedAt || 0) - (b.addedAt || 0);
+        break;
+    }
+    return cmp * dir;
+  });
+
+  return books;
+}
+
+function renderFiltersBar(){
+  const scroll = $('#collections-scroll');
+  if (!scroll) return;
+  scroll.innerHTML = '';
+
+  const totalCount = library.length;
+  const filter = settings.filterCollection || 'all';
+
+  // "Все"
+  const allBtn = document.createElement('button');
+  allBtn.className = 'collection-pill' + (filter === 'all' ? ' active' : '');
+  allBtn.innerHTML = `Все <span class="count">${totalCount}</span>`;
+  allBtn.addEventListener('click', () => {
+    settings.filterCollection = 'all';
+    saveSettings();
+    renderLibrary();
+  });
+  scroll.appendChild(allBtn);
+
+  // Each collection
+  collections.forEach(col => {
+    const count = library.filter(b => b.collectionId === col.id).length;
+    const btn = document.createElement('button');
+    btn.className = 'collection-pill' + (filter === col.id ? ' active' : '');
+    btn.innerHTML = `${esc(col.name)} <span class="count">${count}</span>`;
+    btn.addEventListener('click', () => {
+      settings.filterCollection = col.id;
+      saveSettings();
+      renderLibrary();
+    });
+    btn.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      openCollectionModal('edit', col.id);
+    });
+    scroll.appendChild(btn);
+  });
+
+  // "+ Новая полка"
+  const addBtn = document.createElement('button');
+  addBtn.className = 'collection-pill add';
+  addBtn.innerHTML = '＋ Полка';
+  addBtn.addEventListener('click', () => openCollectionModal('create'));
+  scroll.appendChild(addBtn);
+
+  // Sort label
+  const sortLabels = {
+    addedAt: 'Дата',
+    title: 'Название',
+    author: 'Автор',
+    progress: 'Прогресс',
+    lastOpened: 'Открытие'
+  };
+  const sortLabel = $('#sort-label');
+  const sortArrow = $('#sort-arrow');
+  if (sortLabel) sortLabel.textContent = sortLabels[settings.sortBy || 'addedAt'] || 'Дата';
+  if (sortArrow) sortArrow.textContent = (settings.sortDir === 'asc') ? '↑' : '↓';
+}
+
+function renderSortMenu(){
+  const menu = $('#sort-menu');
+  if (!menu) return;
+  menu.innerHTML = '';
+
+  const options = [
+    { key: 'addedAt', label: 'По дате добавления' },
+    { key: 'title', label: 'По названию' },
+    { key: 'author', label: 'По автору' },
+    { key: 'progress', label: 'По прогрессу' },
+    { key: 'lastOpened', label: 'По последнему открытию' }
+  ];
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    const isActive = (settings.sortBy || 'addedAt') === opt.key;
+    if (isActive) btn.classList.add('active');
+    btn.innerHTML = `<span>${opt.label}</span><span class="sort-check">✓</span>`;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (settings.sortBy === opt.key){
+        settings.sortDir = settings.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        settings.sortBy = opt.key;
+        settings.sortDir = (opt.key === 'title' || opt.key === 'author') ? 'asc' : 'desc';
+      }
+      saveSettings();
+      menu.hidden = true;
+      renderLibrary();
+    });
+    menu.appendChild(btn);
+  });
+}
+
+function openSortMenu(){
+  const menu = $('#sort-menu');
+  const btn = $('#sort-btn');
+  if (!menu || !btn) return;
+
+  renderSortMenu();
+  menu.hidden = false;
+  void menu.offsetHeight;
+
+  const btnRect = btn.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+
+  let left = btnRect.right - menuRect.width;
+  let top = btnRect.bottom + 6;
+  if (left < 12) left = 12;
+  if (top + menuRect.height > window.innerHeight - 12){
+    top = btnRect.top - menuRect.height - 6;
+    if (top < 12) top = 12;
+  }
+
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+}
+
+/* ============ COLLECTION MODAL ============ */
+function openCollectionModal(mode, collectionId){
+  const modal = $('#collection-modal');
+  const input = $('#collection-name-input');
+  const title = $('#collection-modal-title');
+  const saveBtn = $('#collection-modal-save');
+  const delBtn = $('#collection-modal-delete');
+
+  if (mode === 'edit' && collectionId){
+    const col = collections.find(c => c.id === collectionId);
+    if (!col) return;
+    title.textContent = 'Полка';
+    input.value = col.name;
+    saveBtn.textContent = 'Сохранить';
+    delBtn.style.display = '';
+    modal.dataset.mode = 'edit';
+    modal.dataset.collectionId = collectionId;
+  } else {
+    title.textContent = 'Новая полка';
+    input.value = '';
+    saveBtn.textContent = 'Создать';
+    delBtn.style.display = 'none';
+    modal.dataset.mode = 'create';
+    delete modal.dataset.collectionId;
+  }
+
+  modal.classList.add('show');
+  setTimeout(() => input.focus(), 60);
+}
+
+function closeCollectionModal(){
+  const modal = $('#collection-modal');
+  modal.classList.remove('show');
+  delete modal.dataset.pendingBookId;
+}
+
+function submitCollectionModal(){
+  const modal = $('#collection-modal');
+  const input = $('#collection-name-input');
+  const name = (input.value || '').trim();
+  if (!name){ toast('Введите название'); return; }
+
+  const mode = modal.dataset.mode || 'create';
+  const pendingBookId = modal.dataset.pendingBookId;
+
+  if (mode === 'create'){
+    const col = { id: uid(), name, createdAt: Date.now() };
+    collections.push(col);
+    saveCollections();
+
+    if (pendingBookId){
+      const book = library.find(b => b.id === pendingBookId);
+      if (book){
+        book.collectionId = col.id;
+        saveLibrary();
+      }
+    } else {
+      settings.filterCollection = col.id;
+      saveSettings();
+    }
+  } else {
+    const id = modal.dataset.collectionId;
+    const col = collections.find(c => c.id === id);
+    if (col){ col.name = name; saveCollections(); }
+  }
+
+  closeCollectionModal();
+  renderLibrary();
+}
+
+function deleteCollection(id){
+  const col = collections.find(c => c.id === id);
+  if (!col) return;
+  if (!confirm(`Удалить полку «${col.name}»? Книги останутся в библиотеке без полки.`)) return;
+
+  collections = collections.filter(c => c.id !== id);
+  saveCollections();
+
+  library.forEach(b => { if (b.collectionId === id) b.collectionId = null; });
+  saveLibrary();
+
+  if (settings.filterCollection === id){
+    settings.filterCollection = 'all';
+    saveSettings();
+  }
+
+  renderLibrary();
+}
+
+/* ============ BOOK CONTEXT MENU ============ */
+function openBookCtx(bookId, anchorEvent){
+  closeBookCtx();
+
+  const book = library.find(b => b.id === bookId);
+  if (!book) return;
+
+  const menu = document.createElement('div');
+  menu.className = 'book-ctx';
+  menu.id = 'book-ctx';
+
+  const header = document.createElement('div');
+  header.className = 'ctx-header';
+  header.textContent = book.title || 'Книга';
+  menu.appendChild(header);
+
+  const noColBtn = document.createElement('button');
+  noColBtn.innerHTML = `<span class="ctx-dot">${!book.collectionId ? '●' : '○'}</span> Без полки`;
+  noColBtn.addEventListener('click', () => {
+    book.collectionId = null;
+    saveLibrary();
+    closeBookCtx();
+    renderLibrary();
+  });
+  menu.appendChild(noColBtn);
+
+  collections.forEach(col => {
+    const btn = document.createElement('button');
+    const isCurrent = book.collectionId === col.id;
+    btn.innerHTML = `<span class="ctx-dot">${isCurrent ? '●' : '○'}</span> ${esc(col.name)}`;
+    btn.addEventListener('click', () => {
+      book.collectionId = col.id;
+      saveLibrary();
+      closeBookCtx();
+      renderLibrary();
+    });
+    menu.appendChild(btn);
+  });
+
+  const newColBtn = document.createElement('button');
+  newColBtn.className = 'ctx-action';
+  newColBtn.innerHTML = `<span class="ctx-dot">＋</span> Новая полка`;
+  newColBtn.addEventListener('click', () => {
+    closeBookCtx();
+    openCollectionModal('create');
+    $('#collection-modal').dataset.pendingBookId = bookId;
+  });
+  menu.appendChild(newColBtn);
+
+  const div = document.createElement('div');
+  div.className = 'ctx-divider';
+  menu.appendChild(div);
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'danger';
+  delBtn.innerHTML = '<span class="ctx-dot">✕</span> Удалить книгу';
+  delBtn.addEventListener('click', () => {
+    closeBookCtx();
+    if (confirm(`Удалить книгу «${book.title}» из библиотеки?`)) deleteBook(bookId);
+  });
+  menu.appendChild(delBtn);
+
+  document.body.appendChild(menu);
+  bookCtxEl = menu;
+
+  let x, y;
+  if (anchorEvent){
+    const rect = anchorEvent.target.getBoundingClientRect();
+    x = rect.left;
+    y = rect.bottom + 6;
+  } else {
+    x = window.innerWidth / 2 - 120;
+    y = window.innerHeight / 3;
+  }
+
+  const menuRect = menu.getBoundingClientRect();
+  if (x + menuRect.width > window.innerWidth - 12) x = window.innerWidth - menuRect.width - 12;
+  if (y + menuRect.height > window.innerHeight - 12) y = window.innerHeight - menuRect.height - 12;
+  if (x < 12) x = 12;
+  if (y < 12) y = 12;
+
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+
+  setTimeout(() => {
+    document.addEventListener('click', bookCtxOutside);
+    document.addEventListener('touchstart', bookCtxOutside, { passive: true });
+  }, 0);
+}
+
+function closeBookCtx(){
+  if (bookCtxEl){
+    bookCtxEl.remove();
+    bookCtxEl = null;
+  }
+  document.removeEventListener('click', bookCtxOutside);
+  document.removeEventListener('touchstart', bookCtxOutside);
+}
+
+function bookCtxOutside(e){
+  if (!bookCtxEl) return;
+  if (!bookCtxEl.contains(e.target)) closeBookCtx();
+}
+
+/* ============ LIBRARY ============ */
+function renderLibrary(){
+  const list = $('#book-list');
+  const empty = $('#lib-empty');
+  list.innerHTML = '';
+  updateLibStatus();
+  renderContinue();
+  renderFiltersBar();
+
+  const visible = getVisibleBooks();
+
+  if (!visible.length){
+    empty.style.display = '';
+    if (!library.length){
+      empty.innerHTML = `<h2>Библиотека пуста</h2><p>Нажмите «Добавить книгу» и выберите файл в формате<br>TXT, FB2, EPUB или PDF</p>`;
+    } else {
+      empty.innerHTML = `<h2>Здесь пока нет книг</h2><p>Переместите книгу на эту полку через меню ⋮<br>или выберите другую полку.</p>`;
+    }
+    return;
+  }
+  empty.style.display = 'none';
+
+  visible.forEach(book => {
+    const li = document.createElement('li');
+    li.className = 'book-item';
+    const pct = book.totalPages > 0 ? Math.round((book.page / book.totalPages) * 100) : 0;
+    const col = book.collectionId ? collections.find(c => c.id === book.collectionId) : null;
+    const colName = col ? col.name : '';
+    li.innerHTML = `
+      <div class="book-info">
+        <div class="book-title">${esc(book.title)}</div>
+        <div class="book-author">${esc(book.author || 'Неизвестный автор')}</div>
+      </div>
+      ${colName ? `<div class="book-collection-tag">${esc(colName)}</div>` : ''}
+      ${pct > 0 ? `<div class="book-badge">${pct}%</div>` : ''}
+      <button class="book-menu-btn" title="Действия с книгой">⋮</button>
+      <button class="book-del" title="Удалить книгу">✕</button>
+    `;
+    li.addEventListener('click', (e) => {
+      if (e.target.closest('.book-del')) return;
+      if (e.target.closest('.book-menu-btn')) return;
+      openBook(book.id);
+    });
+    li.querySelector('.book-menu-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openBookCtx(book.id, e);
+    });
+    li.querySelector('.book-del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Удалить книгу «${book.title}» из библиотеки?`)) deleteBook(book.id);
+    });
+    list.appendChild(li);
+  });
+}
+
+async function deleteBook(id){
+  if (currentBook && currentBook.meta.id === id) closeBook();
+  library = library.filter(b => b.id !== id);
+  saveLibrary();
+  try { await idbDel(id); } catch(e){}
+  renderLibrary();
+}
+
+/* ============ BOOKMARKS ============ */
+function getBookmarks(){ return currentBook ? (currentBook.meta.bookmarks || []) : []; }
+function hasBookmarkOnPage(page){ return getBookmarks().some(b => b.page === page); }
+function saveBookmarks(bookmarks){
+  if (!currentBook) return;
+  const meta = library.find(b => b.id === currentBook.meta.id);
+  if (!meta) return;
+  meta.bookmarks = bookmarks;
+  try { saveLibrary(); } catch(e){}
+}
+function autoLabelFromPage(){
+  if (mode !== 'text') return '';
+  try {
+    const rect = textViewport.getBoundingClientRect();
+    const startRange = caretRangeFromPoint(rect.left + 2, rect.top + 2);
+    if (!startRange || !startRange.startContainer) return '';
+    const node = startRange.startContainer;
+    const nodeLen = (node.nodeValue || '').length;
+    const end = Math.min(nodeLen, startRange.startOffset + 100);
+    const range = document.createRange();
+    range.setStart(node, startRange.startOffset);
+    range.setEnd(node, end);
+    let text = range.toString().replace(/\s+/g, ' ').trim();
+    if (text.length > 60) text = text.slice(0, 60).trim() + '…';
+    return text;
+  } catch(e){ return ''; }
+}
+function formatBmTime(ts){
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'только что';
+  if (diff < 3600000) return Math.floor(diff / 60000) + ' мин назад';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + ' ч назад';
+  if (diff < 86400000 * 7) return Math.floor(diff / 86400000) + ' дн назад';
+  try { return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }); }
+  catch(_){ return ''; }
+}
+function renderBookmarks(){
+  const list = $('#bookmarks-list');
+  const empty = $('#bookmarks-empty');
+  const count = $('#bookmarks-count');
+  if (!list) return;
+  const bookmarks = getBookmarks().slice().sort((a,b) => a.page - b.page);
+  list.innerHTML = '';
+  if (count) count.textContent = `(${bookmarks.length})`;
+  if (!bookmarks.length){ if (empty) empty.style.display = ''; return; }
+  if (empty) empty.style.display = 'none';
+  bookmarks.forEach(bm => {
+    const item = document.createElement('div');
+    item.className = 'bookmark-item';
+    const labelText = bm.label && bm.label.trim() ? bm.label.trim() : 'Стр. ' + (bm.page + 1);
+    item.innerHTML = `
+      <div class="bookmark-flag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></div>
+      <div class="bookmark-info">
+        <div class="bookmark-label">${esc(labelText)}</div>
+        <div class="bookmark-meta">Стр. ${bm.page + 1}${bm.createdAt ? ' · ' + formatBmTime(bm.createdAt) : ''}</div>
+      </div>
+      <button class="bookmark-del" title="Удалить закладку">✕</button>
+    `;
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.bookmark-del')) return;
+      closeDrawer(); goToPage(bm.page);
+    });
+    item.querySelector('.bookmark-del').addEventListener('click', (e) => {
+      e.stopPropagation(); removeBookmark(bm.page);
+    });
+    list.appendChild(item);
+  });
+}
+function updateBookmarkButton(){
+  const btn = $('#btn-bookmark');
+  if (!btn) return;
+  if (!currentBook){ btn.classList.remove('active'); return; }
+  const has = hasBookmarkOnPage(currentPage);
+  btn.classList.toggle('active', has);
+  const path = btn.querySelector('path');
+  if (path) path.setAttribute('fill', has ? 'currentColor' : 'none');
+  btn.title = has ? 'Убрать закладку со страницы' : 'Заложить страницу';
+}
+function updateAddBookmarkLabel(){
+  const lbl = $('#add-bookmark-label');
+  if (lbl) lbl.textContent = `Заложить страницу ${currentPage + 1}`;
+}
+function toggleBookmarkOnPage(page, label){
+  const bookmarks = getBookmarks().slice();
+  const idx = bookmarks.findIndex(b => b.page === page);
+  if (idx >= 0){ bookmarks.splice(idx, 1); }
+  else {
+    bookmarks.push({
+      page,
+      label: (label || '').trim() || autoLabelFromPage() || ('Стр. ' + (page + 1)),
+      createdAt: Date.now()
+    });
+  }
+  bookmarks.sort((a,b) => a.page - b.page);
+  saveBookmarks(bookmarks);
+  renderBookmarks();
+  updateBookmarkButton();
+}
+function removeBookmark(page){
+  saveBookmarks(getBookmarks().filter(b => b.page !== page));
+  renderBookmarks();
+  updateBookmarkButton();
+}
+function openBookmarkModal(){
+  if (!currentBook) return;
+  const num = $('#bookmark-page-num');
+  if (num) num.textContent = currentPage + 1;
+  const input = $('#bookmark-label-input');
+  if (input){
+    input.value = '';
+    input.placeholder = autoLabelFromPage() || 'Метка (необязательно)';
+  }
+  $('#bookmark-modal').classList.add('show');
+  setTimeout(() => input && input.focus(), 60);
+}
+function closeBookmarkModal(){ $('#bookmark-modal').classList.remove('show'); }
+function submitBookmarkModal(){
+  const input = $('#bookmark-label-input');
+  const label = input ? input.value.trim() : '';
+  if (hasBookmarkOnPage(currentPage)) removeBookmark(currentPage);
+  else toggleBookmarkOnPage(currentPage, label);
+  closeBookmarkModal();
+}
+
+/* ============ EXPORT / IMPORT ============ */
+async function exportLibrary(){
+  if (!library.length){ toast('Библиотека пуста'); return; }
+  closeMenu();
+  toast('Готовим архив…');
+  try {
+    const zip = new ZipWriter();
+    const booksManifest = [];
+    let exported = 0;
+    for (const meta of library){
+      let rec = null;
+      try { rec = await idbGet(meta.id); } catch(e){}
+      if (!rec) continue;
+      let bytes;
+      try { bytes = new Uint8Array(await rec.blob.arrayBuffer()); } catch(e){ continue; }
+      const fileName = `content/${meta.id}.bin`;
+      zip.addFile(fileName, bytes);
+      booksManifest.push({
+        id: meta.id, title: meta.title || '', author: meta.author || '',
+        format: meta.format || '', addedAt: meta.addedAt || Date.now(),
+        page: meta.page || 0, totalPages: meta.totalPages || 0,
+        lastOpened: meta.lastOpened || 0, bookmarks: meta.bookmarks || [],
+        collectionId: meta.collectionId || null,
+        kind: rec.kind, toc: rec.toc || [], fileName
+      });
+      exported++;
+    }
+    if (!exported){ toast('Нечего экспортировать'); return; }
+    const manifest = {
+      app: 'kizamia', version: 1,
+      exportedAt: new Date().toISOString(),
+      collections: collections,
+      books: booksManifest
+    };
+    zip.addFile('manifest.json', JSON.stringify(manifest, null, 2));
+    const blob = zip.finish();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const d = new Date();
+    const stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    a.download = `kizamia-backup-${stamp}.zip`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast(`Экспортировано книг: ${exported}`);
+  } catch (e){
+    console.error(e); alert('Ошибка экспорта: ' + (e.message || e));
+  }
+}
+async function importBackup(file){
+  toast('Читаем архив…');
+  try {
+    const buf = await file.arrayBuffer();
+    const zip = await unzip(buf);
+    const manifestBytes = await zip.get('manifest.json');
+    if (!manifestBytes) throw new Error('Это не резервная копия Kizamia (нет manifest.json).');
+    let manifest;
+    try { manifest = JSON.parse(new TextDecoder().decode(manifestBytes)); }
+    catch(e){ throw new Error('Повреждён manifest.json.'); }
+    if (manifest.app !== 'kizamia' || !Array.isArray(manifest.books)) throw new Error('Неверный формат резервной копии.');
+
+    // Import collections first
+    if (Array.isArray(manifest.collections)){
+      for (const col of manifest.collections){
+        if (!col || typeof col.id !== 'string' || typeof col.name !== 'string') continue;
+        if (!collections.find(c => c.id === col.id)){
+          collections.push({ id: col.id, name: col.name, createdAt: col.createdAt || Date.now() });
+        }
+      }
+      saveCollections();
+    }
+
+    let imported = 0, skipped = 0;
+    const existing = new Set(library.map(b => b.id));
+
+    for (const b of manifest.books){
+      try {
+        const path = b.fileName || `content/${b.id}.bin`;
+        const bytes = await zip.get(path);
+        if (!bytes){ skipped++; continue; }
+        let newId = b.id || uid();
+        while (existing.has(newId)) newId = uid();
+        existing.add(newId);
+        const blob = b.kind === 'pdf'
+          ? new Blob([bytes], { type: 'application/pdf' })
+          : new Blob([bytes], { type: 'application/gzip' });
+        await idbPut(newId, { kind: b.kind || 'text-gz', blob, toc: b.toc || [] });
+        library.push({
+          id: newId, title: b.title || 'Без названия', author: b.author || '',
+          format: b.format || '', addedAt: b.addedAt || Date.now(),
+          page: b.page || 0, totalPages: b.totalPages || 0, lastOpened: b.lastOpened || 0,
+          bookmarks: Array.isArray(b.bookmarks) ? b.bookmarks : [],
+          collectionId: b.collectionId || null
+        });
+        imported++;
+      } catch (e){ console.warn('Не удалось импортировать книгу', b, e); skipped++; }
+    }
+    saveLibrary(); renderLibrary();
+    toast(`Импортировано: ${imported}${skipped ? `, пропущено: ${skipped}` : ''}`);
+  } catch (e){
+    console.error(e); alert('Ошибка импорта: ' + (e.message || e));
+  }
+}
+
+/* ============ FILE HANDLING ============ */
+async function handleFiles(fileList){
+  const files = Array.from(fileList || []);
+  for (const file of files){
+    try {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      if (ext === 'zip') await importBackup(file);
+      else await importBook(file);
+    } catch (err){
+      console.error(err);
+      alert(`Не удалось обработать «${file.name}»:\n\n${err.message || err}`);
+    }
+  }
+  renderLibrary();
+}
+async function importBook(file){
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  let parsed;
+  if (ext === 'txt')       parsed = await parseTxt(file);
+  else if (ext === 'fb2')  parsed = await parseFb2(file);
+  else if (ext === 'epub') parsed = await parseEpub(file);
+  else if (ext === 'pdf')  parsed = await parsePdf(file);
+  else throw new Error('Неподдерживаемый формат. Доступны: TXT, FB2, EPUB, PDF.');
+  const id = uid();
+  const meta = {
+    id, title: (parsed.title || file.name.replace(/\.[^.]+$/, '')).trim() || 'Без названия',
+    author: (parsed.author || '').trim(), format: ext, addedAt: Date.now(),
+    page: 0, totalPages: 0, bookmarks: [], collectionId: null
+  };
+  try {
+    if (ext === 'pdf') await idbPut(id, { kind: 'pdf', blob: file });
+    else {
+      const gz = await gzipBlob(parsed.content.html || '');
+      await idbPut(id, { kind: 'text-gz', blob: gz, toc: parsed.content.toc || [] });
+    }
+    library.push(meta); saveLibrary();
+  } catch (e){
+    try { await idbDel(id); } catch(_){}
+    library = library.filter(b => b.id !== id);
+    throw new Error('Не удалось сохранить книгу: ' + (e.message || e));
+  }
+}
+
+/* ---------- декодирование ---------- */
+function decodeBuffer(buf){
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  if (bytes.length > 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF)
+    return new TextDecoder('utf-8').decode(bytes.subarray(3));
+  if (bytes.length > 2 && bytes[0] === 0xFF && bytes[1] === 0xFE)
+    return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+  if (bytes.length > 2 && bytes[0] === 0xFE && bytes[1] === 0xFF)
+    return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+  catch (e){
+    try { return new TextDecoder('windows-1251').decode(bytes); } catch(_){}
+    try { return new TextDecoder('koi8-r').decode(bytes); } catch(_){}
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+}
+function decodeXml(bytes){
+  const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  if (b.length > 3 && b[0] === 0xEF && b[1] === 0xBB && b[2] === 0xBF)
+    return new TextDecoder('utf-8').decode(b.subarray(3));
+  if (b.length > 2 && b[0] === 0xFF && b[1] === 0xFE)
+    return new TextDecoder('utf-16le').decode(b.subarray(2));
+  if (b.length > 2 && b[0] === 0xFE && b[1] === 0xFF)
+    return new TextDecoder('utf-16be').decode(b.subarray(2));
+  let head = '';
+  const n = Math.min(b.length, 400);
+  for (let i = 0; i < n; i++) head += String.fromCharCode(b[i]);
+  const m = head.match(/encoding\s*=\s*["']([\w\-]+)["']/i);
+  if (m && m[1].toLowerCase() !== 'utf-8' && m[1].toLowerCase() !== 'utf8'){
+    try { return new TextDecoder(m[1]).decode(b); } catch(_){}
+  }
+  return decodeBuffer(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
+}
+
+/* ---------- TXT ---------- */
+const HEADING_START = /^\s*(глава|часть|том|книга|пролог|эпилог|предисловие|послесловие|примечани|содержание|вступление|заключение|эпиграф|интермедия|chapter|part|book|prologue|epilogue)\b/i;
+function isHeadingLine(line){
+  if (!line || line.length > 100) return false;
+  if (HEADING_START.test(line)) return true;
+  const letters = line.replace(/[^А-Яа-яЁёA-Za-z]/g, '');
+  if (letters.length >= 3 && letters.length <= 60 && line === line.toUpperCase() && /[А-ЯЁA-Z]/.test(line)) return true;
+  return false;
+}
+function textToHtml(text){
+  text = text.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').replace(/\t/g, ' ');
+  const lines = text.split('\n');
+  const out = [], toc = [];
+  let para = [], hIdx = 0;
+  const flush = () => {
+    if (!para.length) return;
+    const t = para.join(' ').replace(/\s+/g, ' ').trim();
+    if (t) out.push('<p>' + esc(t) + '</p>');
+    para = [];
+  };
+  for (const raw of lines){
+    const line = raw.trim();
+    if (!line){ flush(); continue; }
+    if (isHeadingLine(line)){
+      flush();
+      const id = 'h' + (hIdx++);
+      out.push(`<h2 id="${id}">${esc(line)}</h2>`);
+      toc.push({ label: line, anchor: id });
+      continue;
+    }
+    para.push(line);
+  }
+  flush();
+  return { html: out.join('\n'), toc };
+}
+function guessMetaFromFilename(name){
+  const base = name.replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const parts = base.split(/\s+[-–—]\s+/);
+  if (parts.length >= 2){
+    const author = parts[0].trim();
+    const title = parts.slice(1).join(' — ').trim();
+    if (author.length <= 60 && title) return { author, title };
+  }
+  return { title: base, author: '' };
+}
+async function parseTxt(file){
+  const buf = await file.arrayBuffer();
+  const text = decodeBuffer(buf);
+  const { html, toc } = textToHtml(text);
+  const meta = guessMetaFromFilename(file.name);
+  return { title: meta.title, author: meta.author, content: { type: 'text', html, toc } };
+}
+
+/* ---------- FB2 ---------- */
+function findByLocal(root, name){
+  const out = [];
+  (function walk(el){
+    if (!el) return;
+    if (el.localName === name) out.push(el);
+    for (let c = el.firstElementChild; c; c = c.nextElementSibling) walk(c);
+  })(root);
+  return out;
+}
+const FB2_INLINE = { emphasis: 'em', strong: 'strong', strikethrough: 's', sub: 'sub', sup: 'sup', code: 'code', style: 'span' };
+function fb2Inline(el, ctx){
+  let s = '';
+  for (let c = el.firstChild; c; c = c.nextSibling){
+    if (c.nodeType === 3) s += esc(c.nodeValue);
+    else if (c.nodeType === 1){
+      const tag = FB2_INLINE[c.localName];
+      if (tag) s += `<${tag}>${fb2Inline(c, ctx)}</${tag}>`;
+      else if (c.localName === 'a') s += fb2Inline(c, ctx);
+      else if (c.localName === 'image') {}
+      else s += fb2Inline(c, ctx);
+    }
+  }
+  return s;
+}
+function fb2Element(el, ctx){
+  switch (el.localName){
+    case 'section': return fb2Section(el, ctx);
+    case 'title': return '';
+    case 'p': return `<p>${fb2Inline(el, ctx)}</p>`;
+    case 'empty-line': return '<div class="spacer"></div>';
+    case 'epigraph': case 'cite': case 'annotation': return `<blockquote>${fb2Children(el, ctx)}</blockquote>`;
+    case 'poem': return `<div class="poem">${fb2Children(el, ctx)}</div>`;
+    case 'stanza': return `<div class="stanza">${fb2Children(el, ctx)}</div>`;
+    case 'v': return `<p class="verse">${fb2Inline(el, ctx)}</p>`;
+    case 'subtitle': return `<p class="subtitle">${fb2Inline(el, ctx)}</p>`;
+    case 'text-author': return `<p class="verse"><em>${fb2Inline(el, ctx)}</em></p>`;
+    case 'image': return '';
+    case 'table': case 'tr': return `<div>${fb2Children(el, ctx)}</div>`;
+    case 'td': case 'th': return `<span>${fb2Inline(el, ctx)} </span>`;
+    default: return fb2Children(el, ctx);
+  }
+}
+function fb2Children(node, ctx){
+  let html = '';
+  for (let c = node.firstElementChild; c; c = c.nextElementSibling) html += fb2Element(c, ctx);
+  return html;
+}
+function fb2Section(el, ctx){
+  let html = '';
+  const titleEl = Array.from(el.children).find(c => c.localName === 'title');
+  if (titleEl){
+    const t = titleEl.textContent.replace(/\s+/g, ' ').trim();
+    if (t){
+      const level = Math.min(4, ctx.depth + 2);
+      const id = 'fb2t' + (ctx.toc.length);
+      html += `<h${level} id="${id}">${esc(t)}</h${level}>`;
+      ctx.toc.push({ label: t, anchor: id });
+    }
+  }
+  ctx.depth++;
+  for (let c = el.firstElementChild; c; c = c.nextElementSibling){
+    if (c.localName === 'title') continue;
+    html += fb2Element(c, ctx);
+  }
+  ctx.depth--;
+  return html;
+}
+async function parseFb2(file){
+  const buf = await file.arrayBuffer();
+  const text = decodeXml(new Uint8Array(buf));
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Файл FB2 повреждён.');
+  const titleInfo = findByLocal(doc, 'title-info')[0] || doc;
+  const titleEl = findByLocal(titleInfo, 'book-title')[0];
+  const title = titleEl ? titleEl.textContent.trim() : '';
+  const authorEl = findByLocal(titleInfo, 'author')[0];
+  let author = '';
+  if (authorEl){
+    author = ['first-name', 'middle-name', 'last-name']
+      .map(t => { const e = findByLocal(authorEl, t)[0]; return e ? e.textContent.trim() : ''; })
+      .filter(Boolean).join(' ');
+  }
+  const bodies = findByLocal(doc, 'body').filter(b => (b.getAttribute('name') || '') !== 'notes');
+  if (!bodies.length) throw new Error('В файле FB2 не найден текст.');
+  const ctx = { toc: [], depth: 0 };
+  let html = '';
+  for (const body of bodies) html += fb2Children(body, ctx);
+  if (!html.trim()) throw new Error('В файле FB2 не найден текст.');
+  return {
+    title: title || guessMetaFromFilename(file.name).title, author,
+    content: { type: 'text', html, toc: ctx.toc }
+  };
+}
+
+/* ---------- ZIP READER ---------- */
+async function unzip(buffer){
+  const u8 = new Uint8Array(buffer);
+  const dv = new DataView(buffer);
+  let eocd = -1;
+  const minPos = Math.max(0, u8.length - 66000);
+  for (let i = u8.length - 22; i >= minPos; i--){
+    if (dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('Не удалось распознать архив.');
+  const total = dv.getUint16(eocd + 10, true);
+  let off = dv.getUint32(eocd + 16, true);
+  const entries = [];
+  for (let i = 0; i < total; i++){
+    if (off + 46 > u8.length) break;
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    const method = dv.getUint16(off + 10, true);
+    const compSize = dv.getUint32(off + 20, true);
+    const nameLen = dv.getUint16(off + 28, true);
+    const extraLen = dv.getUint16(off + 30, true);
+    const commLen = dv.getUint16(off + 32, true);
+    const localOff = dv.getUint32(off + 42, true);
+    const name = new TextDecoder('utf-8').decode(u8.subarray(off + 46, off + 46 + nameLen));
+    entries.push({ name, method, compSize, localOff });
+    off += 46 + nameLen + extraLen + commLen;
+  }
+  const map = new Map(entries.map(e => [e.name, e]));
+  async function get(rawName){
+    if (!rawName) return null;
+    const clean = rawName.replace(/^\/+/, '');
+    let e = map.get(clean);
+    if (!e){
+      let decoded = clean;
+      try { decoded = decodeURIComponent(clean); } catch(_){}
+      e = map.get(decoded) || entries.find(x => x.name.toLowerCase() === decoded.toLowerCase());
+    }
+    if (!e) return null;
+    const lo = e.localOff;
+    if (lo + 30 > u8.length || dv.getUint32(lo, true) !== 0x04034b50) throw new Error('Повреждён архив.');
+    const nameLen = dv.getUint16(lo + 26, true);
+    const extraLen = dv.getUint16(lo + 28, true);
+    const start = lo + 30 + nameLen + extraLen;
+    const data = u8.subarray(start, start + e.compSize);
+    if (e.method === 0) return data;
+    if (e.method === 8){
+      if (typeof DecompressionStream === 'undefined') throw new Error('Нет DecompressionStream.');
+      const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return new Uint8Array(await new Response(stream).arrayBuffer());
+    }
+    throw new Error('Неподдерживаемое сжатие.');
+  }
+  return { get };
+}
+
+/* ---------- EPUB ---------- */
+function resolvePath(base, href){
+  if (!href) return '';
+  let path = href, hash = '';
+  const h = href.indexOf('#');
+  if (h >= 0){ path = href.slice(0, h); hash = href.slice(h + 1); }
+  try { path = decodeURIComponent(path); } catch(_){}
+  const combined = (base || '') + path;
+  const parts = combined.split('/');
+  const out = [];
+  for (const p of parts){
+    if (p === '..') out.pop();
+    else if (p === '.' || p === '') continue;
+    else out.push(p);
+  }
+  return out.join('/') + (hash ? '#' + hash : '');
+}
+function sanitizeBody(body){
+  body.querySelectorAll('script,style,link,meta,iframe,object,embed,svg,img,image,video,audio,noscript,base').forEach(n => n.remove());
+  body.querySelectorAll('*').forEach(n => {
+    for (const a of Array.from(n.attributes)){
+      if (a.name.toLowerCase().startsWith('on')) n.removeAttribute(a.name);
+    }
+    if (n.hasAttribute('style')) n.removeAttribute('style');
+  });
+}
+function parseEpubNav(xml, navPath, hrefToDoc){
+  const doc = new DOMParser().parseFromString(xml, 'text/html');
+  const navs = Array.from(doc.querySelectorAll('nav'));
+  let nav = null;
+  for (const n of navs){
+    const type = (n.getAttribute('epub:type') || n.getAttribute('type') || n.getAttribute('role') || '').toLowerCase();
+    if (type.includes('toc')){ nav = n; break; }
+  }
+  if (!nav) nav = navs[0] || doc.body;
+  if (!nav) return [];
+  const dir = navPath.includes('/') ? navPath.slice(0, navPath.lastIndexOf('/') + 1) : '';
+  const out = [];
+  nav.querySelectorAll('a[href]').forEach(a => {
+    const label = (a.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!label) return;
+    const full = resolvePath(dir, a.getAttribute('href'));
+    const hashIdx = full.indexOf('#');
+    const path = hashIdx >= 0 ? full.slice(0, hashIdx) : full;
+    const frag = hashIdx >= 0 ? full.slice(hashIdx + 1) : '';
+    const docId = hrefToDoc.get(path);
+    if (!docId) return;
+    out.push({ label, anchor: frag || docId });
+  });
+  return out;
+}
+function parseEpubNcx(xml, ncxPath, hrefToDoc){
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const dir = ncxPath.includes('/') ? ncxPath.slice(0, ncxPath.lastIndexOf('/') + 1) : '';
+  const out = [];
+  for (const np of findByLocal(doc, 'navPoint')){
+    const labelEl = findByLocal(np, 'text')[0];
+    const contentEl = findByLocal(np, 'content')[0];
+    if (!labelEl || !contentEl) continue;
+    const label = (labelEl.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!label) continue;
+    const full = resolvePath(dir, contentEl.getAttribute('src') || '');
+    const hashIdx = full.indexOf('#');
+    const path = hashIdx >= 0 ? full.slice(0, hashIdx) : full;
+    const frag = hashIdx >= 0 ? full.slice(hashIdx + 1) : '';
+    const docId = hrefToDoc.get(path);
+    if (!docId) continue;
+    out.push({ label, anchor: frag || docId });
+  }
+  return out;
+}
+async function parseEpub(file){
+  const buf = await file.arrayBuffer();
+  const zip = await unzip(buf);
+  const containerBytes = await zip.get('META-INF/container.xml');
+  if (!containerBytes) throw new Error('Файл не является корректным EPUB.');
+  const cdoc = new DOMParser().parseFromString(decodeXml(containerBytes), 'application/xml');
+  const rootfile = findByLocal(cdoc, 'rootfile')[0];
+  if (!rootfile) throw new Error('В EPUB не найден OPF.');
+  let opfPath = rootfile.getAttribute('full-path') || '';
+  try { opfPath = decodeURIComponent(opfPath); } catch(_){}
+  const opfBytes = await zip.get(opfPath);
+  if (!opfBytes) throw new Error('Не удалось прочитать OPF.');
+  const opf = new DOMParser().parseFromString(decodeXml(opfBytes), 'application/xml');
+  if (opf.querySelector('parsererror')) throw new Error('Повреждён OPF.');
+  const opfDir = opfPath.includes('/') ? opfPath.slice(0, opfPath.lastIndexOf('/') + 1) : '';
+  const titleEl = findByLocal(opf, 'title')[0];
+  const title = titleEl ? titleEl.textContent.trim() : '';
+  const creatorEl = findByLocal(opf, 'creator')[0];
+  const author = creatorEl ? creatorEl.textContent.trim() : '';
+  const manifest = new Map();
+  for (const item of findByLocal(opf, 'item')){
+    const id = item.getAttribute('id');
+    if (!id) continue;
+    const href = resolvePath(opfDir, item.getAttribute('href') || '');
+    const hashIdx = href.indexOf('#');
+    manifest.set(id, {
+      href: hashIdx >= 0 ? href.slice(0, hashIdx) : href,
+      type: item.getAttribute('media-type') || '',
+      props: item.getAttribute('properties') || ''
+    });
+  }
+  const spineEl = findByLocal(opf, 'spine')[0];
+  const itemrefs = spineEl ? Array.from(spineEl.children).filter(c => c.localName === 'itemref') : [];
+  const parts = [], fallbackToc = [], hrefToDoc = new Map();
+  let idx = 0;
+  for (const ref of itemrefs){
+    const item = manifest.get(ref.getAttribute('idref'));
+    if (!item) continue;
+    if (!/html|xml/i.test(item.type) && !/\.x?html?$/i.test(item.href)) continue;
+    const bytes = await zip.get(item.href);
+    if (!bytes) continue;
+    const doc = new DOMParser().parseFromString(decodeXml(bytes), 'text/html');
+    const body = doc.body;
+    if (!body) continue;
+    sanitizeBody(body);
+    body.querySelectorAll('h1,h2,h3,h4,h5').forEach((h, i) => {
+      const label = (h.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!label) return;
+      if (!h.id) h.id = `doc-${idx}-h${i}`;
+      fallbackToc.push({ label, anchor: h.id });
+    });
+    const docId = 'doc-' + idx;
+    hrefToDoc.set(item.href, docId);
+    parts.push(`<div class="epub-doc" id="${docId}">${body.innerHTML}</div>`);
+    idx++;
+  }
+  if (!parts.length) throw new Error('В EPUB не найден текст.');
+  let toc = [];
+  const navItem = Array.from(manifest.values()).find(m => m.props.split(/\s+/).includes('nav'));
+  if (navItem){
+    try {
+      const nb = await zip.get(navItem.href);
+      if (nb) toc = parseEpubNav(decodeXml(nb), navItem.href, hrefToDoc);
+    } catch(_){}
+  }
+  if (!toc.length){
+    const ncxId = spineEl ? spineEl.getAttribute('toc') : null;
+    let ncxItem = ncxId ? manifest.get(ncxId) : null;
+    if (!ncxItem) ncxItem = Array.from(manifest.values()).find(m => m.type === 'application/x-dtbncx+xml');
+    if (ncxItem){
+      try {
+        const nb = await zip.get(ncxItem.href);
+        if (nb) toc = parseEpubNcx(decodeXml(nb), ncxItem.href, hrefToDoc);
+      } catch(_){}
+    }
+  }
+  if (!toc.length) toc = fallbackToc;
+  return {
+    title: title || guessMetaFromFilename(file.name).title, author,
+    content: { type: 'text', html: parts.join('\n'), toc }
+  };
+}
+
+/* ---------- PDF ---------- */
+function base64ToBytes(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function parsePdf(file){
+  if (!window.pdfjsLib) throw new Error('Модуль PDF не загружен.');
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
+  let title = '';
+  try {
+    const meta = await doc.getMetadata();
+    title = (meta && meta.info && meta.info.Title) ? String(meta.info.Title).trim() : '';
+  } catch(_){}
+  const numPages = doc.numPages;
+  try { doc.destroy(); } catch(_){}
+  return {
+    title: title || guessMetaFromFilename(file.name).title, author: '',
+    content: { type: 'pdf', numPages }
+  };
+}
+async function buildPdfToc(){
+  if (!pdfDoc) return [];
+  let outline = null;
+  try { outline = await pdfDoc.getOutline(); } catch(_){}
+  if (!outline || !outline.length) return [];
+  const out = [];
+  async function walk(items, depth){
+    for (const it of items){
+      let pageIdx = 0;
+      try {
+        let dest = it.dest;
+        if (typeof dest === 'string') dest = await pdfDoc.getDestination(dest);
+        if (Array.isArray(dest)){
+          const ref = dest[0];
+          if (typeof ref === 'number') pageIdx = ref;
+          else if (ref) pageIdx = await pdfDoc.getPageIndex(ref);
+        }
+      } catch(_){}
+      out.push({
+        label: (depth > 0 ? '— '.repeat(depth) : '') + (it.title || 'Без названия'),
+        anchor: 'pdf:' + pageIdx
+      });
+      if (it.items && it.items.length) await walk(it.items, depth + 1);
+    }
+  }
+  await walk(outline, 0);
+  return out;
+}
+async function renderPdfPage(n){
+  if (!pdfDoc) return;
+  if (pdfBusy){ pdfQueued = n; return; }
+  pdfBusy = true;
+  try {
+    const page = await pdfDoc.getPage(n);
+    const availW = Math.max(100, pdfViewport.clientWidth - 24);
+    const availH = Math.max(100, pdfViewport.clientHeight - 24);
+    const base = page.getViewport({ scale: 1 });
+    const scale = Math.min(availW / base.width, availH / base.height);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const viewport = page.getViewport({ scale: scale * dpr });
+    pdfCanvas.width = Math.max(1, Math.floor(viewport.width));
+    pdfCanvas.height = Math.max(1, Math.floor(viewport.height));
+    pdfCanvas.style.width = Math.floor(viewport.width / dpr) + 'px';
+    pdfCanvas.style.height = Math.floor(viewport.height / dpr) + 'px';
+    const ctx2d = pdfCanvas.getContext('2d');
+    ctx2d.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+    await page.render({ canvasContext: ctx2d, viewport }).promise;
+  } catch (e){ console.error('PDF render', e); }
+  pdfBusy = false;
+  if (pdfQueued !== null){
+    const q = pdfQueued; pdfQueued = null;
+    if (q !== n) renderPdfPage(q);
+  }
+}
+
+/* ============ TTS — ОБЩЕЕ ============ */
+function updateSpeakButton(){
+  const btn = $('#btn-speak');
+  if (!btn) return;
+  if (ttsPreparing){ btn.textContent = '…'; btn.title = 'Подготовка голоса…'; }
+  else if (ttsSpeaking){ btn.textContent = '⏹'; btn.title = 'Остановить чтение'; }
+  else { btn.textContent = '▶'; btn.title = 'Начать чтение'; }
+  updatePlayToggleBtn();
+}
+function updatePlayToggleBtn(){
+  const btn = $('#tts-play-toggle');
+  if (!btn) return;
+  if (ttsPreparing) btn.textContent = '… Подготовка';
+  else if (ttsSpeaking) btn.textContent = '⏹ Остановить';
+  else btn.textContent = '▶ Читать';
+}
+function caretRangeFromPoint(x, y){
+  if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+  if (document.caretPositionFromPoint){
+    const pos = document.caretPositionFromPoint(x, y);
+    if (!pos) return null;
+    const range = document.createRange();
+    range.setStart(pos.offsetNode, pos.offset);
+    range.collapse(true);
+    return range;
+  }
+  return null;
+}
+function getCurrentPageText(){
+  if (mode !== 'text') return '';
+  const rect = textViewport.getBoundingClientRect();
+  const startRange = caretRangeFromPoint(rect.left + 2, rect.top + 2);
+  if (!startRange) return '';
+  let endRange = null;
+  if (currentPage < totalPages - 1){
+    const original = textViewport.scrollLeft;
+    textViewport.scrollLeft = (currentPage + 1) * pageWidth;
+    const nextRect = textViewport.getBoundingClientRect();
+    endRange = caretRangeFromPoint(nextRect.left + 2, nextRect.top + 2);
+    textViewport.scrollLeft = original;
+  }
+  const range = document.createRange();
+  range.setStart(startRange.startContainer, startRange.startOffset);
+  if (endRange && endRange.startContainer){
+    range.setEnd(endRange.startContainer, endRange.startOffset);
+  } else {
+    const end = document.createRange();
+    end.selectNodeContents(textFlow);
+    range.setEnd(end.endContainer, end.endOffset);
+  }
+  return range.toString().replace(/\s+/g, ' ').trim();
+}
+function stopSpeaking(){
+  if (!ttsSpeaking && !ttsPreparing) return;
+  ttsSpeaking = false;
+  ttsPreparing = false;
+  piperCancelled = true;
+  if (ttsUtterance){
+    ttsUtterance.onend = null; ttsUtterance.onerror = null; ttsUtterance = null;
+  }
+  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+  if (currentAudioEl){
+    try { currentAudioEl.pause(); } catch(e){}
+    try { currentAudioEl.src = ''; } catch(e){}
+    currentAudioEl = null;
+  }
+  updateSpeakButton();
+}
+function startSpeaking(){
+  if (mode !== 'text' || !currentBook) return;
+  if (ttsSpeaking || ttsPreparing) return;
+
+  if (settings.ttsEngine === 'piper'){
+    const voiceId = PIPER_VOICES[settings.voiceGender || 'female'];
+    if (!piperReadyVoices.has(voiceId)){
+      alert('Нейронный голос не установлен. Откройте «Читать вслух» и скачайте его.');
+      return;
+    }
+    ttsSpeaking = true;
+    updateSpeakButton();
+    speakWithPiper();
+    return;
+  }
+
+  if (!('speechSynthesis' in window)){
+    alert('Озвучка не поддерживается вашим браузером.');
+    return;
+  }
+  ttsSpeaking = true;
+  updateSpeakButton();
+  speakCurrentPage();
+}
+
+/* ============ TTS — СИСТЕМНЫЙ ============ */
+function getRussianVoices(){
+  const all = speechSynthesis.getVoices();
+  let ru = all.filter(v => (v.lang || '').toLowerCase().startsWith('ru'));
+  if (!ru.length) ru = all;
+  return ru;
+}
+function pickSystemVoice(gender){
+  const voices = getRussianVoices();
+  if (!voices.length) return null;
+  const femaleRe = /female|жен|irina|elena|anna|maria|alena|milena|valeria|google русский|google russian|samantha|victoria|karen|tessa|zira|hazel|susan/i;
+  const maleRe = /male|муж|pavel|dmitri|dmitry|alex|yuri|yuriy|artem|maxim|ivan|david|mark|george/i;
+  const re = gender === 'female' ? femaleRe : maleRe;
+  return voices.find(v => re.test(v.name)) || voices[0];
+}
+function speakCurrentPage(){
+  if (!ttsSpeaking) return;
+  const text = getCurrentPageText();
+  if (!text.trim()){
+    if (currentPage < totalPages - 1){
+      ttsAutoAdvance = true;
+      goToPage(currentPage + 1);
+      ttsAutoAdvance = false;
+      if (ttsSpeaking) speakCurrentPage();
+    } else stopSpeaking();
+    return;
+  }
+  const utt = new SpeechSynthesisUtterance(text);
+  const voice = pickSystemVoice(settings.voiceGender);
+  if (voice){ utt.voice = voice; utt.lang = voice.lang; }
+  else utt.lang = 'ru-RU';
+  utt.rate = 1;
+  utt.pitch = 1;
+  utt.onend = () => {
+    if (!ttsSpeaking) return;
+    if (currentPage < totalPages - 1){
+      ttsAutoAdvance = true;
+      goToPage(currentPage + 1);
+      ttsAutoAdvance = false;
+      if (ttsSpeaking) speakCurrentPage();
+    } else stopSpeaking();
+  };
+  utt.onerror = () => { if (ttsSpeaking) stopSpeaking(); };
+  ttsUtterance = utt;
+  speechSynthesis.speak(utt);
+}
+
+/* ============ TTS — PIPER ============ */
+async function loadPiperModule(){
+  if (piperModule) return piperModule;
+  try {
+    piperModule = await import('piper-tts-web');
+    return piperModule;
+  } catch (e){
+    console.error('Failed to load piper-tts-web:', e);
+    throw new Error('Не удалось загрузить движок нейронной озвучки. Проверьте интернет.');
+  }
+}
+async function enrichPiperStateFromModule(){
+  try {
+    const tts = await loadPiperModule();
+    if (typeof tts.stored !== 'function') return;
+    const res = await tts.stored();
+    if (!Array.isArray(res) || !res.length) return;
+    let changed = false;
+    for (const item of res){
+      const str = String(item);
+      for (const id of Object.values(PIPER_VOICES)){
+        if (str.includes(id) && !piperReadyVoices.has(id)){ piperReadyVoices.add(id); changed = true; }
+      }
+    }
+    if (changed) setPiperInstalledLS(Array.from(piperReadyVoices));
+  } catch(e){}
+}
+async function downloadPiperVoice(voiceId, onProgress){
+  const tts = await loadPiperModule();
+  await tts.download(voiceId, (p) => { if (onProgress) onProgress(p); });
+  markPiperInstalled(voiceId);
+}
+async function synthesizePiper(text, voiceId){
+  const tts = await loadPiperModule();
+  try {
+    return await tts.predict({ text, voiceId });
+  } catch(e){
+    if (/not.*found|missing|not.*available|failed.*load|cannot.*download/i.test(e.message || '')){
+      markPiperUninstalled(voiceId);
+      throw new Error('VOICE_NOT_AVAILABLE');
+    }
+    throw e;
+  }
+}
+async function warmupPiper(voiceId){
+  if (piperWarmedUp.has(voiceId)) return;
+  piperWarmedUp.add(voiceId);
+  try { await synthesizePiper('Раз', voiceId); }
+  catch(e){ piperWarmedUp.delete(voiceId); console.warn('Piper warmup failed', e); }
+}
+function splitSentences(text){
+  return text
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?…])\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+}
+function trimWavTrailingSilence(blob, amplitudeThreshold = 350, minTailMs = 120){
+  return new Promise(async (resolve) => {
+    try {
+      const buf = await blob.arrayBuffer();
+      if (buf.byteLength < 44){ resolve(blob); return; }
+      const dv = new DataView(buf);
+      if (dv.getUint32(0, false) !== 0x52494646) { resolve(blob); return; }
+      if (dv.getUint32(8, false) !== 0x57415645) { resolve(blob); return; }
+      let offset = 12;
+      let channels = 1, sampleRate = 22050, bitsPerSample = 16;
+      let dataOffset = 0, dataSize = 0;
+      while (offset + 8 <= buf.byteLength){
+        const chunkId = dv.getUint32(offset, false);
+        const chunkSize = dv.getUint32(offset + 4, true);
+        if (chunkId === 0x666d7420){
+          channels = dv.getUint16(offset + 10, true);
+          sampleRate = dv.getUint32(offset + 12, true);
+          bitsPerSample = dv.getUint16(offset + 22, true);
+        } else if (chunkId === 0x64617461){
+          dataOffset = offset + 8; dataSize = chunkSize; break;
+        }
+        offset += 8 + chunkSize + (chunkSize % 2);
+      }
+      if (!dataOffset || !dataSize || bitsPerSample !== 16 || channels < 1){ resolve(blob); return; }
+      const bytesPerFrame = channels * 2;
+      const totalFrames = Math.floor(dataSize / bytesPerFrame);
+      const tailFrames = Math.floor(sampleRate * minTailMs / 1000);
+      let lastNonSilent = totalFrames - 1;
+      for (let i = totalFrames - 1; i >= 0; i--){
+        let maxAmp = 0;
+        for (let c = 0; c < channels; c++){
+          const off = dataOffset + (i * channels + c) * 2;
+          const v = Math.abs(dv.getInt16(off, true));
+          if (v > maxAmp) maxAmp = v;
+        }
+        if (maxAmp > amplitudeThreshold){ lastNonSilent = i; break; }
+      }
+      const newFrames = Math.min(totalFrames, lastNonSilent + tailFrames + 1);
+      if (newFrames >= totalFrames - 10){ resolve(blob); return; }
+      const newDataSize = newFrames * bytesPerFrame;
+      const newBuf = new ArrayBuffer(dataOffset + newDataSize);
+      const u8 = new Uint8Array(newBuf);
+      u8.set(new Uint8Array(buf, 0, dataOffset), 0);
+      u8.set(new Uint8Array(buf, dataOffset, newDataSize), dataOffset);
+      const newDv = new DataView(newBuf);
+      newDv.setUint32(4, dataOffset + newDataSize - 8, true);
+      newDv.setUint32(dataOffset - 4, newDataSize, true);
+      resolve(new Blob([newBuf], { type: 'audio/wav' }));
+    } catch(e){ resolve(blob); }
+  });
+}
+function playAudioBlob(blob){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    currentAudioEl = audio;
+    audio.onended = () => { URL.revokeObjectURL(url); currentAudioEl = null; resolve(); };
+    audio.onerror = (e) => { URL.revokeObjectURL(url); currentAudioEl = null; reject(e); };
+    audio.play().catch(reject);
+  });
+}
+async function speakWithPiper(){
+  const voiceId = PIPER_VOICES[settings.voiceGender || 'female'];
+  const pageText = getCurrentPageText();
+  if (!pageText.trim()){
+    if (currentPage < totalPages - 1){
+      ttsAutoAdvance = true;
+      goToPage(currentPage + 1);
+      ttsAutoAdvance = false;
+      if (ttsSpeaking) speakWithPiper();
+    } else stopSpeaking();
+    return;
+  }
+  const sentences = splitSentences(pageText);
+  if (!sentences.length){ stopSpeaking(); return; }
+  piperCancelled = false;
+  const LOOKAHEAD = 3;
+  const cache = new Map();
+  const prefetch = (idx) => {
+    if (idx >= sentences.length || cache.has(idx)) return;
+    const p = synthesizePiper(sentences[idx], voiceId)
+      .then(blob => blob ? trimWavTrailingSilence(blob, 350, 120) : null)
+      .catch(e => { console.warn('Piper synth error', idx, e); return { __error: e }; });
+    cache.set(idx, p);
+  };
+  ttsPreparing = true;
+  updateSpeakButton();
+  prefetch(0);
+  let firstBlob = null;
+  try { firstBlob = await cache.get(0); } catch(e){}
+  ttsPreparing = false;
+  updateSpeakButton();
+  if (piperCancelled || !ttsSpeaking) return;
+  if (firstBlob && firstBlob.__error){
+    if (firstBlob.__error.message === 'VOICE_NOT_AVAILABLE'){
+      stopSpeaking();
+      alert('Голос больше не доступен в кэше браузера. Скачайте его снова в настройках озвучки.');
+      if ($('#tts-modal').classList.contains('show')) updatePiperStatuses();
+      return;
+    }
+  } else if (firstBlob){
+    for (let k = 1; k <= LOOKAHEAD && k < sentences.length; k++) prefetch(k);
+    try { await playAudioBlob(firstBlob); }
+    catch(e){ console.warn('Piper play error', e); }
+  }
+  for (let i = 1; i < sentences.length; i++){
+    if (piperCancelled || !ttsSpeaking) return;
+    for (let k = i + 1; k <= i + LOOKAHEAD && k < sentences.length; k++) prefetch(k);
+    let blob = null;
+    try { blob = await cache.get(i); } catch(e){}
+    if (piperCancelled || !ttsSpeaking) return;
+    if (blob && blob.__error){
+      if (blob.__error.message === 'VOICE_NOT_AVAILABLE'){
+        stopSpeaking();
+        alert('Голос больше не доступен в кэше браузера. Скачайте его снова в настройках озвучки.');
+        if ($('#tts-modal').classList.contains('show')) updatePiperStatuses();
+        return;
+      }
+      continue;
+    }
+    if (!blob) continue;
+    try { await playAudioBlob(blob); }
+    catch(e){ console.warn('Piper play error', e); }
+  }
+  cache.clear();
+  if (piperCancelled || !ttsSpeaking) return;
+  if (currentPage < totalPages - 1){
+    ttsAutoAdvance = true;
+    goToPage(currentPage + 1);
+    ttsAutoAdvance = false;
+    if (ttsSpeaking) speakWithPiper();
+  } else stopSpeaking();
+}
+
+/* ============ TTS MODAL ============ */
+function updateTtsModal(){
+  $$('.tts-option').forEach(btn => {
+    const engine = btn.dataset.engine;
+    const gender = btn.dataset.gender;
+    const isActive = (settings.ttsEngine || 'system') === engine &&
+                     (settings.voiceGender || 'female') === gender;
+    btn.classList.toggle('active', isActive);
+  });
+  updatePlayToggleBtn();
+}
+function updatePiperStatuses(){
+  $$('.tts-option[data-engine="piper"]').forEach(btn => {
+    const gender = btn.dataset.gender;
+    const voiceId = PIPER_VOICES[gender];
+    const statusEl = btn.querySelector('.tts-option-status');
+    if (!statusEl) return;
+    if (piperReadyVoices.has(voiceId)){
+      statusEl.textContent = '✓ Установлен';
+      statusEl.classList.add('installed');
+      statusEl.classList.remove('downloading');
+    } else {
+      statusEl.textContent = 'Скачать';
+      statusEl.classList.remove('installed', 'downloading');
+    }
+  });
+}
+async function openTtsModal(){
+  $('#tts-modal').classList.add('show');
+  updateTtsModal();
+  updatePiperStatuses();
+  enrichPiperStateFromModule().then(() => {
+    if ($('#tts-modal').classList.contains('show')) updatePiperStatuses();
+  }).catch(() => {});
+}
+function closeTtsModal(){ $('#tts-modal').classList.remove('show'); }
+async function downloadAndInstallPiper(voiceId, gender){
+  const progressEl = $('#piper-progress');
+  const fillEl = $('#piper-progress-fill');
+  const pctEl = $('#piper-progress-pct');
+  const labelEl = $('#piper-progress-label');
+  progressEl.hidden = false;
+  fillEl.style.width = '0%';
+  pctEl.textContent = '0%';
+  labelEl.textContent = gender === 'female' ? 'Загрузка женского голоса…' : 'Загрузка мужского голоса…';
+  const statusEl = $(`.tts-option[data-engine="piper"][data-gender="${gender}"] .tts-option-status`);
+  if (statusEl){ statusEl.textContent = 'Скачивание…'; statusEl.classList.add('downloading'); }
+  try {
+    await downloadPiperVoice(voiceId, (p) => {
+      const percent = p.total > 0 ? Math.round((p.loaded / p.total) * 100) : 0;
+      fillEl.style.width = percent + '%';
+      pctEl.textContent = percent + '%';
+    });
+    fillEl.style.width = '100%';
+    pctEl.textContent = '100%';
+    setTimeout(() => { progressEl.hidden = true; }, 800);
+    updatePiperStatuses();
+    toast('Голос установлен');
+  } catch(e){
+    console.error(e);
+    progressEl.hidden = true;
+    updatePiperStatuses();
+    toast('Не удалось скачать голос');
+    throw e;
+  }
+}
+async function selectTtsOption(engine, gender){
+  if (engine === 'piper'){
+    const voiceId = PIPER_VOICES[gender];
+    if (!piperReadyVoices.has(voiceId)){
+      try { await downloadAndInstallPiper(voiceId, gender); }
+      catch(e){ return; }
+    }
+    warmupPiper(voiceId);
+  }
+  settings.ttsEngine = engine;
+  settings.voiceGender = gender;
+  saveSettings();
+  if (ttsSpeaking){
+    stopSpeaking();
+    setTimeout(() => { if (!ttsSpeaking) startSpeaking(); }, 150);
+  }
+  updateTtsModal();
+}
+
+/* ============ READER ============ */
+async function openBook(id){
+  stopSpeaking();
+  const meta = library.find(b => b.id === id);
+  if (!meta) return;
+  meta.lastOpened = Date.now();
+  try { saveLibrary(); } catch(e){}
+  let rec = null;
+  try { rec = await idbGet(id); } catch(e){ console.error(e); }
+  if (!rec){ alert('Файл книги не найден в хранилище.'); return; }
+  currentBook = { meta, rec };
+  currentPage = 0; totalPages = 1;
+  pdfDoc = null; pdfBusy = false; pdfQueued = null;
+  $('#reader-title').textContent = meta.title;
+  showView('reader');
+  closeDrawer();
+  const isText = rec.kind !== 'pdf';
+  $('#btn-speak').disabled = !isText;
+  $('#btn-tts-settings').disabled = !isText;
+  updateSpeakButton();
+  if (rec.kind === 'pdf'){
+    mode = 'pdf';
+    textViewport.style.display = 'none';
+    pdfViewport.style.display = 'flex';
+    try {
+      if (!window.pdfjsLib) throw new Error('Модуль PDF не загружен.');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const buf = await rec.blob.arrayBuffer();
+      pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+      totalPages = pdfDoc.numPages;
+      currentToc = await buildPdfToc();
+      renderToc(); renderBookmarks(); updateAddBookmarkLabel();
+      goToPage(clamp(meta.page || 0, 0, totalPages - 1));
+    } catch (e){
+      console.error(e); alert('Не удалось открыть PDF: ' + (e.message || e)); closeBook();
+    }
+  } else {
+    mode = 'text';
+    pdfViewport.style.display = 'none';
+    textViewport.style.display = 'block';
+    try {
+      const html = await gunzipBlob(rec.blob);
+      textFlow.innerHTML = html || '<p>Текст книги не найден.</p>';
+    } catch(e){ textFlow.innerHTML = '<p>Не удалось распаковать текст.</p>'; }
+    currentToc = rec.toc || [];
+    renderToc(); renderBookmarks(); updateAddBookmarkLabel();
+    applyFontSize();
+    requestAnimationFrame(() => {
+      layoutText();
+      goToPage(clamp(meta.page || 0, 0, totalPages - 1));
+    });
+  }
+}
+function closeBook(){
+  stopSpeaking();
+  saveProgressNow();
+  currentBook = null;
+  pdfDoc = null; pdfBusy = false; pdfQueued = null;
+  currentToc = [];
+  showView('library');
+  renderLibrary();
+}
+
+function layoutText(){
+  if (mode !== 'text') return;
+  const w = Math.floor(textViewport.clientWidth);
+  const h = Math.floor(textViewport.clientHeight);
+  if (w <= 0 || h <= 0) return;
+  pageWidth = w;
+  textFlow.style.columnWidth = w + 'px';
+  textFlow.style.width = w + 'px';
+  textFlow.style.height = h + 'px';
+  void textFlow.offsetHeight;
+  const sw = Math.max(textViewport.scrollWidth, textFlow.scrollWidth);
+  totalPages = Math.max(1, Math.round(sw / w));
+  updatePageLabel();
+}
+function goToPage(i){
+  if (!currentBook) return;
+  if ((ttsSpeaking || ttsPreparing) && !ttsAutoAdvance) stopSpeaking();
+  i = clamp(i, 0, Math.max(0, totalPages - 1));
+  currentPage = i;
+  if (mode === 'text') textViewport.scrollLeft = i * pageWidth;
+  else if (mode === 'pdf') renderPdfPage(i + 1);
+  updatePageLabel(); updateBookmarkButton(); updateAddBookmarkLabel(); saveProgress();
+}
+function updatePageLabel(){
+  const label = $('#page-label');
+  if (label) label.textContent = `Стр. ${Math.min(currentPage + 1, totalPages)} из ${totalPages}`;
+  const prev = $('#btn-prev');
+  const next = $('#btn-next');
+  if (prev) prev.disabled = currentPage <= 0;
+  if (next) next.disabled = currentPage >= totalPages - 1;
+}
+function goToAnchor(anchor){
+  if (!anchor) return;
+  if (anchor.startsWith('pdf:')){ goToPage(parseInt(anchor.slice(4), 10) || 0); return; }
+  if (mode !== 'text') return;
+  let el = null;
+  try { el = textFlow.querySelector('#' + CSS.escape(anchor)); } catch(_){ el = null; }
+  if (!el) return;
+  let x = 0, n = el, guard = 0;
+  while (n && n !== textFlow && guard++ < 30){ x += n.offsetLeft; n = n.offsetParent; }
+  goToPage(Math.round(x / pageWidth));
+}
+
+function renderToc(){
+  const ul = $('#toc-list');
+  ul.innerHTML = '';
+  if (!currentToc || !currentToc.length){
+    const li = document.createElement('li');
+    li.className = 'toc-empty';
+    li.textContent = 'Оглавление недоступно';
+    ul.appendChild(li);
+    return;
+  }
+  currentToc.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item.label;
+    li.addEventListener('click', () => { closeDrawer(); goToAnchor(item.anchor); });
+    ul.appendChild(li);
+  });
+}
+function openDrawer(){ $('#drawer').classList.add('open'); $('#overlay').classList.add('show'); }
+function closeDrawer(){ $('#drawer').classList.remove('open'); $('#overlay').classList.remove('show'); }
+function openPageModal(){
+  const input = $('#page-input');
+  input.max = String(totalPages);
+  input.value = String(Math.min(currentPage + 1, totalPages));
+  $('#page-modal').classList.add('show');
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+}
+function closePageModal(){ $('#page-modal').classList.remove('show'); }
+function submitPageModal(){
+  const v = parseInt($('#page-input').value, 10);
+  if (!isNaN(v)) goToPage(v - 1);
+  closePageModal();
+}
+
+function openMenu(){
+  $('#menu-popup').hidden = false;
+  setTimeout(() => document.addEventListener('click', closeMenuOnOutside), 0);
+}
+function closeMenu(){
+  const p = $('#menu-popup');
+  if (p) p.hidden = true;
+  document.removeEventListener('click', closeMenuOnOutside);
+}
+function closeMenuOnOutside(e){
+  if (!e.target.closest('#menu-popup') && !e.target.closest('#btn-menu')) closeMenu();
+}
+
+/* ============ EVENTS ============ */
+function initEvents(){
+  $('#btn-add').addEventListener('click', () => $('#file-input').click());
+  $('#file-input').addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if (files && files.length) await handleFiles(files);
+    e.target.value = '';
+  });
+  $('#menu-import').addEventListener('click', () => {
+    closeMenu();
+    $('#backup-input').click();
+  });
+  $('#backup-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file){
+      try { await importBackup(file); }
+      catch (err){ alert('Не удалось импортировать: ' + (err.message || err)); }
+    }
+    e.target.value = '';
+  });
+  $('#menu-export').addEventListener('click', () => exportLibrary());
+
+  $('#btn-menu').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if ($('#menu-popup').hidden) openMenu();
+    else closeMenu();
+  });
+
+  let dragDepth = 0;
+  document.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+    dragDepth++;
+    document.body.classList.add('drag-active');
+  });
+  document.addEventListener('dragleave', () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) document.body.classList.remove('drag-active');
+  });
+  document.addEventListener('dragover', (e) => e.preventDefault());
+  document.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    document.body.classList.remove('drag-active');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length){
+      await handleFiles(e.dataTransfer.files);
+    }
+  });
+
+  $('#btn-theme-lib').addEventListener('click', toggleTheme);
+  $('#theme-toggle').addEventListener('click', toggleTheme);
+
+  // Sort
+  $('#sort-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = $('#sort-menu');
+    if (menu.hidden) openSortMenu();
+    else menu.hidden = true;
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#sort-btn') && !e.target.closest('#sort-menu')){
+      const m = $('#sort-menu');
+      if (m) m.hidden = true;
+    }
+  });
+  window.addEventListener('resize', () => {
+    const m = $('#sort-menu');
+    if (m && !m.hidden) m.hidden = true;
+  });
+
+  // Collection modal
+  $('#collection-modal-cancel').addEventListener('click', closeCollectionModal);
+  $('#collection-modal-save').addEventListener('click', submitCollectionModal);
+  $('#collection-modal-delete').addEventListener('click', () => {
+    const id = $('#collection-modal').dataset.collectionId;
+    if (id){ closeCollectionModal(); deleteCollection(id); }
+  });
+  $('#collection-name-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitCollectionModal();
+    if (e.key === 'Escape') closeCollectionModal();
+  });
+  $('#collection-modal').addEventListener('click', (e) => {
+    if (e.target === $('#collection-modal')) closeCollectionModal();
+  });
+
+  $('#btn-close-book').addEventListener('click', closeBook);
+  $('#btn-prev').addEventListener('click', () => goToPage(currentPage - 1));
+  $('#btn-next').addEventListener('click', () => goToPage(currentPage + 1));
+  $('#btn-page').addEventListener('click', openPageModal);
+  $('#btn-drawer').addEventListener('click', openDrawer);
+  $('#drawer-close').addEventListener('click', closeDrawer);
+  $('#overlay').addEventListener('click', closeDrawer);
+
+  $('#btn-tts-settings').addEventListener('click', openTtsModal);
+  $('#btn-speak').addEventListener('click', () => {
+    if (ttsSpeaking || ttsPreparing) stopSpeaking();
+    else startSpeaking();
+  });
+  $('#tts-modal-close').addEventListener('click', closeTtsModal);
+  $('#tts-modal').addEventListener('click', (e) => {
+    if (e.target === $('#tts-modal')) closeTtsModal();
+  });
+  $('#tts-play-toggle').addEventListener('click', () => {
+    if (ttsSpeaking || ttsPreparing) stopSpeaking();
+    else startSpeaking();
+  });
+  $$('.tts-option').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const engine = btn.dataset.engine;
+      const gender = btn.dataset.gender;
+      try { await selectTtsOption(engine, gender); }
+      catch(e){}
+    });
+  });
+
+  $('#btn-bookmark').addEventListener('click', () => {
+    if (!currentBook) return;
+    toggleBookmarkOnPage(currentPage, '');
+  });
+  $('#add-bookmark-btn').addEventListener('click', openBookmarkModal);
+  $('#bookmark-cancel').addEventListener('click', closeBookmarkModal);
+  $('#bookmark-save').addEventListener('click', submitBookmarkModal);
+  $('#bookmark-label-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitBookmarkModal();
+    if (e.key === 'Escape') closeBookmarkModal();
+  });
+  $('#bookmark-modal').addEventListener('click', (e) => {
+    if (e.target === $('#bookmark-modal')) closeBookmarkModal();
+  });
+
+  $('#fs-dec').addEventListener('click', () => changeFontSize(-0.1));
+  $('#fs-inc').addEventListener('click', () => changeFontSize(0.1));
+
+  $('#page-cancel').addEventListener('click', closePageModal);
+  $('#page-go').addEventListener('click', submitPageModal);
+  $('#page-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitPageModal();
+    if (e.key === 'Escape') closePageModal();
+  });
+  $('#page-modal').addEventListener('click', (e) => {
+    if (e.target === $('#page-modal')) closePageModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!$('#view-reader').classList.contains('active')) return;
+    if ($('#page-modal').classList.contains('show')) return;
+    if ($('#bookmark-modal').classList.contains('show')) return;
+    if ($('#tts-modal').classList.contains('show')) {
+      if (e.key === 'Escape') closeTtsModal();
+      return;
+    }
+    if (e.target && /input|textarea/i.test(e.target.tagName)) return;
+
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' '){
+      e.preventDefault(); goToPage(currentPage + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){
+      e.preventDefault(); goToPage(currentPage - 1);
+    } else if (e.key === 'Home'){ e.preventDefault(); goToPage(0); }
+    else if (e.key === 'End'){ e.preventDefault(); goToPage(totalPages - 1); }
+    else if (e.key === 'Escape'){
+      if ($('#bookmark-modal').classList.contains('show')) closeBookmarkModal();
+      else if ($('#drawer').classList.contains('open')) closeDrawer();
+      else closeBook();
+    }
+  });
+
+  let tx = 0, ty = 0, touching = false;
+  readerBody.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1){ touching = false; return; }
+    tx = e.touches[0].clientX; ty = e.touches[0].clientY; touching = true;
+  }, { passive: true });
+  readerBody.addEventListener('touchend', (e) => {
+    if (!touching) return;
+    touching = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - tx, dy = t.clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.4){
+      goToPage(currentPage + (dx < 0 ? 1 : -1));
+    }
+  }, { passive: true });
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (!$('#view-reader').classList.contains('active') || !currentBook) return;
+      stopSpeaking();
+      if (mode === 'text'){
+        const ratio = totalPages > 1 ? currentPage / (totalPages - 1) : 0;
+        applyFontSize();
+        layoutText();
+        goToPage(Math.round(ratio * (totalPages - 1)));
+      } else if (mode === 'pdf' && pdfDoc){
+        renderPdfPage(currentPage + 1);
+      }
+    }, 200);
+  });
+
+  window.addEventListener('beforeunload', saveProgressNow);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) saveProgressNow();
+  });
+}
+
+/* ============ MIGRATION ============ */
+async function migrateFromLocalStorage(){
+  if (LS.get(KEYS.migrated, false)) return;
+  let migrated = 0;
+  for (const meta of library.slice()){
+    const oldKey = 'kizami.book.' + meta.id;
+    let old = null;
+    try { old = LS.get(oldKey, null); } catch(e){}
+    if (!old){
+      let hasIdb = null;
+      try { hasIdb = await idbGet(meta.id); } catch(e){}
+      if (hasIdb) continue;
+      continue;
+    }
+    try {
+      if (old.type === 'pdf' && typeof old.data === 'string'){
+        const bytes = base64ToBytes(old.data);
+        await idbPut(meta.id, { kind: 'pdf', blob: new Blob([bytes], { type: 'application/pdf' }) });
+      } else if (old.type === 'text'){
+        const gz = await gzipBlob(old.html || '');
+        await idbPut(meta.id, { kind: 'text-gz', blob: gz, toc: old.toc || [] });
+      } else continue;
+      try { LS.del(oldKey); } catch(e){}
+      migrated++;
+    } catch(e){}
+  }
+  if (migrated > 0) saveLibrary();
+  try { LS.set(KEYS.migrated, true); } catch(e){}
+}
+
+/* ============ START ============ */
+async function init(){
+  applyTheme();
+  applyFontSize();
+
+  piperReadyVoices = new Set(getPiperInstalledLS());
+
+  if (navigator.storage && navigator.storage.persist){
+    navigator.storage.persist().catch(() => {});
+  }
+
+  try { await migrateFromLocalStorage(); } catch(e){}
+
+  renderLibrary();
+  initEvents();
+
+  if (typeof pdfjsLib !== 'undefined'){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
