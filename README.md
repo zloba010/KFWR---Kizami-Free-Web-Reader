@@ -1,5 +1,5 @@
 # KFWR---Kizami-Free-Web-Reader
-#Бесплатная веб-читалка книг в форматах TXT, FB2, EPUB, PDF с озвучиванием(обычное + нейроголоса) без регистрации и сбора cookie.
+# Бесплатная веб-читалка книг в форматах TXT, FB2, EPUB, PDF с озвучиванием(обычное + нейроголоса) без регистрации и сбора cookie.
 
 ##![alt text](https://raw.githubusercontent.com/zloba010/newsrauskerland/refs/heads/main/Screenshot_20261111-111953.jpg)
 
