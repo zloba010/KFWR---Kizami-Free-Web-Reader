@@ -1291,6 +1291,16 @@ const PIPER_VOICES = {
   male:   'ru_RU-dmitri-medium'
 };
 
+// ===== BroadcastChannel для синхронизации с TroubleTab =====
+let _kizamiBC = null;
+function getBC(){
+  if (!window.BroadcastChannel) return null;
+  if (!_kizamiBC){
+    try { _kizamiBC = new BroadcastChannel('kizami'); } catch(e){ return null; }
+  }
+  return _kizamiBC;
+}
+
 let currentBook = null;
 let mode = 'text';
 let currentToc = [];
@@ -1374,7 +1384,18 @@ function saveProgressNow(){
   if (!meta) return;
   meta.page = currentPage;
   meta.totalPages = totalPages;
+  meta.lastOpened = Date.now();
   try { saveLibrary(); } catch(e){}
+  const bc = getBC();
+  if (bc){
+    bc.postMessage({
+      type: 'progress',
+      bookId: meta.id,
+      page: currentPage,
+      totalPages: totalPages,
+      lastOpened: meta.lastOpened
+    });
+  }
 }
 
 function applyTheme(){
@@ -1872,6 +1893,7 @@ async function deleteBook(id){
   library = library.filter(b => b.id !== id);
   saveLibrary();
   try { await idbDel(id); } catch(e){}
+  getBC()?.postMessage({ type: 'library-changed' });
   renderLibrary();
 }
 
@@ -3094,6 +3116,15 @@ function closeBook(){
   renderLibrary();
 }
 
+async function openFromURL(){
+  const params = new URLSearchParams(location.search);
+  const bookId = params.get('book');
+  if (!bookId) return;
+  history.replaceState({}, '', location.pathname + location.hash);
+  if (!library.find(b => b.id === bookId)) return;
+  await openBook(bookId);
+}
+
 function layoutText(){
   if (mode !== 'text') return;
   const w = Math.floor(textViewport.clientWidth);
@@ -3435,6 +3466,8 @@ async function init(){
   if (typeof pdfjsLib !== 'undefined'){
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
+
+  await openFromURL();
 }
 
 init();
