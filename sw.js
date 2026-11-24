@@ -1,11 +1,10 @@
 const CACHE_NAME = 'kizamia-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  // добавьте сюда ваши css/js-файлы и иконки
-  '/icon-192.png',
-  '/icon-512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
