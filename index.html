@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
+  <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .catch((err) => console.error('SW registration failed:', err));
+  });
+}
+  </script>
 <meta name="theme-color" content="#4a3728">
 <title>Kizamia — читалка книг</title>
 <script type="importmap">
